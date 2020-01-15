@@ -1,4 +1,4 @@
-(* Book code *)
+(* Straight-line programming language *)
 type id = string
 
 datatype binop = Plus | Minus | Times | Div
@@ -11,6 +11,8 @@ datatype stm = CompoundStm of stm * stm
 	     | NumExp of int
              | OpExp of exp * binop * exp
              | EseqExp of stm * exp
+
+(* Sample program *)
 val prog = 
  CompoundStm(AssignStm("a",OpExp(NumExp 5, Plus, NumExp 3)),
   CompoundStm(AssignStm("b",
@@ -18,9 +20,7 @@ val prog =
            OpExp(NumExp 10, Times, IdExp"a"))),
    PrintStm[IdExp "b"]))
 
-(* My code *)
-
-(* Calculates maximum arguments in any print statement of a statement *)
+(* Toy function. Calculates maximum arguments in any print statement of a statement *)
 fun maxargs(s:stm) : int =
     case s of 
         AssignStm(_,exp) => maxargs_exp([exp])
@@ -34,14 +34,14 @@ and maxargs_exp(el: exp list) : int =
     |   OpExp(exp1,_,exp2)::t => Int.max(maxargs_exp([exp1,exp2]), maxargs_exp(t))
     |   EseqExp(stm,exp)::t => Int.max(maxargs_exp t, Int.max(maxargs stm, maxargs_exp [exp]));
 
-(* Interpreter *)
+(* Interpreter for straight-line programming language *)
 type table = (id * int) list
 
 fun update(id : id, v : int, tbl : table) : table = (id,v)::tbl;
 
 fun lookup(tbl : table, id : id) : int = 
     case tbl of
-        [] => 0 (* invalid program *)
+        [] => 0 (* Unreachable in valid programs *)
     |   (idM,vM)::t => if id = idM then vM else lookup(t,id);
 
 fun evalop(a : int, opt : binop, b : int) : int =
@@ -82,4 +82,5 @@ and interpExp(e : exp, tbl : table) : int * table =
 
 fun interp(s : stm) : unit = (interpStm(s, []); ());
 
+(* Test call *)
 interp prog 
