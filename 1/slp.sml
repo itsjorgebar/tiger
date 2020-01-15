@@ -34,7 +34,7 @@ and maxargs_exp(el: exp list) : int =
     |   OpExp(exp1,_,exp2)::t => Int.max(maxargs_exp([exp1,exp2]), maxargs_exp(t))
     |   EseqExp(stm,exp)::t => Int.max(maxargs_exp t, Int.max(maxargs stm, maxargs_exp [exp]));
 
-(* Interpreter*)
+(* Interpreter *)
 type table = (id * int) list
 
 fun update(id : id, v : int, tbl : table) : table = (id,v)::tbl;
@@ -51,13 +51,7 @@ fun evalop(a : int, opt : binop, b : int) : int =
     |   Times => a * b
     |   Div => a div b;
 
-fun interp(s : stm) : unit =
-    case s of
-        CompoundStm(s1,s2) => (interpStm(s2, interpStm(s1, [])); ())
-    |   PrintStm([]) => ()
-    |   PrintStm(h::t) => (interpStm ((PrintStm t), (interpStm (PrintStm [h], []))); ())
-    |   AssignStm(id,exp) => ()
-and interpStm(s : stm, tbl : table) : table =
+fun interpStm(s : stm, tbl : table) : table =
     case s of
         CompoundStm(s1,s2) => interpStm(s2, interpStm(s1, tbl))
     |   AssignStm(id,exp) => 
@@ -85,3 +79,7 @@ and interpExp(e : exp, tbl : table) : int * table =
               (evalop(a,opt,b), tblB)
             end
     |   EseqExp(stm,ex) => interpExp(ex, interpStm(stm, tbl));
+
+fun interp(s : stm) : unit = (interpStm(s, []); ());
+
+interp prog 
