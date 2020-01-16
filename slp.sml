@@ -1,4 +1,3 @@
-(* Straight-line programming language *)
 type id = string
 
 datatype binop = Plus | Minus | Times | Div
@@ -11,8 +10,6 @@ datatype stm = CompoundStm of stm * stm
 	     | NumExp of int
              | OpExp of exp * binop * exp
              | EseqExp of stm * exp
-
-(* Sample program *)
 val prog = 
  CompoundStm(AssignStm("a",OpExp(NumExp 5, Plus, NumExp 3)),
   CompoundStm(AssignStm("b",
@@ -20,67 +17,70 @@ val prog =
            OpExp(NumExp 10, Times, IdExp"a"))),
    PrintStm[IdExp "b"]))
 
-(* Toy function. Calculates maximum arguments in any print statement of a statement *)
-fun maxargs(s:stm) : int =
-    case s of 
-        AssignStm(_,exp) => maxargs_exp([exp])
-    |   PrintStm(x) => Int.max(length x, maxargs_exp x)
-    |   CompoundStm(stm1, stm2) => Int.max(maxargs stm1, maxargs stm2)
-and maxargs_exp(el: exp list) : int =
-    case el of
-        [] => 0
-    |   IdExp(_)::t => maxargs_exp(t)
-    |   NumExp(_)::t => maxargs_exp(t)
-    |   OpExp(exp1,_,exp2)::t => Int.max(maxargs_exp([exp1,exp2]), maxargs_exp(t))
-    |   EseqExp(stm,exp)::t => Int.max(maxargs_exp t, Int.max(maxargs stm, maxargs_exp [exp]));
+(* Activity 1.1 *)
 
-(* Interpreter for straight-line programming language *)
-type table = (id * int) list
+fun maxargs(s : stm) : int =
+   case s of
+      CompoundStm(a, b) => Int.max(maxargs(a), maxargs(b))
+   |  AssignStm(a, b) => maxargsExp(b)
+   |  PrintStm(l as x::xs) => Int.max(Int.max(length(l), maxargsExp(x)), maxargs(PrintStm(xs)))
+   |  PrintStm(nil) => 0
 
-fun update(id : id, v : int, tbl : table) : table = (id,v)::tbl;
+ and maxargsExp(e : exp) : int =
+   case e of
+      IdExp(_) => 0
+   |  NumExp(_) => 0
+   |  OpExp(a, _, c) => Int.max(maxargsExp(a), maxargsExp(c))
+   |  EseqExp(a, b) => Int.max(maxargs(a), maxargsExp(b));
 
-fun lookup(tbl : table, id : id) : int = 
-    case tbl of
-        [] => 0 (* Unreachable in valid programs *)
-    |   (idM,vM)::t => if id = idM then vM else lookup(t,id);
+ maxargs(prog);
 
-fun evalop(a : int, opt : binop, b : int) : int =
+(* Activity 1.2 *)
+
+type table = (id * int) list;
+
+fun update(a:string, b:int, T) = (a, b)::T;
+
+fun lookup(t:table as (a, b)::xs, c:id) = if a=c then b else lookup(xs, c)
+ |  lookup(_, c) = 0;
+
+fun operate(a:int, opt:binop, b:int) : int =
     case opt of
-        Plus => a + b
-    |   Minus => a - b
-    |   Times => a * b
-    |   Div => a div b;
+      Plus => a + b
+   |  Minus => a - b
+   |  Times => a * b
+   |  Div => a div b;
 
-fun interpStm(s : stm, tbl : table) : table =
+fun interpStm(s : stm, t : table) : table =
     case s of
-        CompoundStm(s1,s2) => interpStm(s2, interpStm(s1, tbl))
-    |   AssignStm(id,exp) => 
-            let 
-                val (vIn, tblIn) = interpExp(exp, tbl)
-            in
-                update(id, vIn, tblIn)
-            end
-    |   PrintStm([]) => (print "\n"; tbl)
-    |   PrintStm(h::t) => 
-            let
-              val (num, tblIn) = interpExp (h, tbl)
-            in
-                (print (Int.toString num ^ " "); interpStm (PrintStm t, tblIn))
-            end
-and interpExp(e : exp, tbl : table) : int * table =
-    case e of
-        IdExp(x) => (lookup (tbl,x),tbl)
-    |   NumExp(x) => (x,tbl)
-    |   OpExp(aP,opt,bP) => 
-            let
-              val (a,tblA) = interpExp(aP,tbl)
-              val (b,tblB) = interpExp(bP,tblA)
-            in
-              (evalop(a,opt,b), tblB)
-            end
-    |   EseqExp(stm,ex) => interpExp(ex, interpStm(stm, tbl));
+      CompoundStm(a, b) => interpStm(b, interpStm(a, t))
+   |  AssignStm(a, b) =>
+         let
+            val (i1, t1) = interpExp(b, t)
+         in
+            update(a, i1, t1)
+         end
+   |  PrintStm(x::xs) =>
+         let
+            val (i1, t1) = interpExp(x, t)
+         in
+            print(Int.toString(i1)^" "); interpStm(PrintStm(xs), t1)
+         end
+   |  PrintStm(nil) => (print("\n"); t)
 
-fun interp(s : stm) : unit = (interpStm(s, []); ());
+and interpExp(e : exp, t : table) : (int * table) =
+     case e of
+      NumExp(a) => (a, t)
+   |  IdExp(a) => (lookup(t, a), t)
+   |  OpExp(a, b, c) =>
+         let
+            val (i1, t1) = interpExp(a, t)
+            val (i2, t2) = interpExp(c, t1)
+         in
+            (operate(i1, b, i2), t2)
+         end
+   |  EseqExp(a, b) => interpExp(b, interpStm(a, t));
 
-(* Test call *)
-interp prog 
+fun interp(a : stm) : unit = (interpStm(a, []); ());
+
+interp(prog)
