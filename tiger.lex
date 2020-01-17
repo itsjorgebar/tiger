@@ -7,7 +7,17 @@ val linePos = ErrorMsg.linePos
 val nestlevel = ref 0
 fun err(p1,p2) = ErrorMsg.error p1
 
-fun eof() = let val pos = hd(!linePos) in Tokens.EOF(pos,pos) end
+fun eof() =
+  let
+    val pos = hd(!linePos)
+  in
+    if
+      !nestlevel>0
+    then
+      (ErrorMsg.error pos ("unclosed comment at EOF "); Tokens.EOF(pos,pos))
+    else
+      Tokens.EOF(pos,pos)
+  end
 
 %%
 alpha=[A-Za-z];
@@ -56,10 +66,11 @@ digit=[0-9];
 <INITIAL> "&" => (Tokens.AND(yypos, yypos+1));
 <INITIAL> "|" => (Tokens.OR(yypos, yypos+1));
 <INITIAL> ":=" => (Tokens.ASSIGN(yypos, yypos+2));
-<INITIAL> \"[^\"]\" => (Tokens.STRING(yytext, yypos, yypos+size(yytext)));
+<INITIAL> \"[^\"]*\" => (Tokens.STRING(yytext, yypos, yypos+size(yytext)));
 <INITIAL> {digit}+ => (Tokens.INT(valOf(Int.fromString(yytext)), yypos, yypos+size(yytext)));
-<INITIAL> {alpha}({alpha}|{digit}|-)* => (Tokens.ID(yytext, yypos, yypos+size(yytext)));
+<INITIAL> {alpha}({alpha}|{digit}|_)* => (Tokens.ID(yytext, yypos, yypos+size(yytext)));
 <INITIAL, COMMENT> "/*" => (nestlevel := !nestlevel+1; YYBEGIN COMMENT; continue());
 <COMMENT> "*/" => (nestlevel := !nestlevel-1; if !nestlevel<0 then ErrorMsg.error yypos "illegal end of comment" else (if !nestlevel=0 then YYBEGIN INITIAL else ()); continue());
 <COMMENT> . => (continue());
+<INITIAL> \"[^\"]* => (ErrorMsg.error yypos ("unclosed string at EOF "); continue());
 <INITIAL>  . => (ErrorMsg.error yypos ("illegal character " ^ yytext); continue());
