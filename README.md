@@ -21,7 +21,7 @@ sml
 ```
 Invoke ML-Lex to update any changes to the language:
 ```
-CM.make "sources.com";
+CM.make "sources.cm";
 ```
 Run the parser:
 ```
