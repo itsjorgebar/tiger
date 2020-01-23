@@ -13,7 +13,7 @@ The **tareaX** folders include the homework assignments for the Compilers course
 
 ## Instructions
 ### Pre-requisites
-Install (Standard ML of New Jersey)[http://www.smlnj.org/], the ML compiler used for this project.
+Install [Standard ML of New Jersey](http://www.smlnj.org/), the ML compiler used for this project.
 ### Compiling
 Run the interactive ML tool:
 '''
