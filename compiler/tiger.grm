@@ -39,5 +39,23 @@
 
 program	: exp				()
 
-	
 exp: 			()
+
+decs: dec decs ()
+  | dec ()
+
+dec: tydec ()
+  | vardec ()
+  | fundec ()
+
+tydec: TYPE ID EQ ty ()
+
+ty: ID ()
+  | LBRACK tyfields RBRACK ()
+  | ARRAY OF ID ()
+
+tyfields: ()
+  | ID COLON ID tyfieldsP ()
+
+tyfieldsP: () 
+  | COMMA ID  COLON ID tyfieldsP ()
