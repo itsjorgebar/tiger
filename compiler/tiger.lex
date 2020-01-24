@@ -1,5 +1,7 @@
+type svalue = Tokens.svalue
 type pos = int
-type lexresult = Tokens.token
+type ('a,'b) token = ('a,'b) Tokens.token
+type lexresult = (svalue, pos) token
 type nestlevel = int
 
 val lineNum = ErrorMsg.lineNum
@@ -20,6 +22,7 @@ fun eof() =
   end
 
 %%
+%header (functor TigerLexFun (structure Tokens: Tiger_TOKENS));
 alpha=[A-Za-z];
 digit=[0-9];
 %s COMMENT;
