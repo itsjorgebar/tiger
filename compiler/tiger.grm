@@ -10,11 +10,11 @@
   | ARRAY | IF | THEN | ELSE | WHILE | FOR | TO | DO | LET | IN | END | OF 
   | BREAK | NIL
   | FUNCTION | VAR | TYPE 
-  | UMINUS
+  | UMINUS | ELSEPRE
 
 %nonterm  exp | program | decs | dec | tydec | vardec | fundec | ty | tyfields | tyfieldsP | lvalue | unit | negation
   | bool | comp | op | comparison | arithmetic | boolcomp | expP | record | recP | array | assignment | ifThenElse
-  | ifThen | let | expseq | args | while | forloop
+  | ifThen | let | expseq | args | while | forloop | lval
 
 %pos int
 %verbose
@@ -23,8 +23,10 @@
 %noshift EOF
 
 (* Precedences *)
-%nonassoc OR
-%nonassoc AND
+%nonassoc ELSEPRE
+%nonassoc ELSE
+%nonassoc ASSIGN
+%left AND OR
 %nonassoc EQ NEQ GT LT LE GE
 %left PLUS MINUS
 %left TIMES DIVIDE
@@ -56,9 +58,9 @@ exp: NIL ()
   | INT ()
   | STRING ()
   | negation ()
-  | arithmetic ()
+  (* | arithmetic ()
   | comparison ()
-  | boolcomp ()
+  | boolcomp () *)
   | record ()
   | array ()
   | assignment ()
@@ -138,14 +140,18 @@ fundec: FUNCTION ID LPAREN tyfields RPAREN EQ exp ()
   | FUNCTION ID LPAREN tyfields RPAREN COLON ID EQ exp ()
 
 lvalue: ID () 
-  | lvalue DOT ID ()
-  | lvalue LBRACK exp RBRACK ()
+  | lval ()
+
+lval: ID DOT ID ()
+  | lval DOT ID ()
+  | ID LBRACK exp RBRACK ()
+  | lval LBRACK exp RBRACK ()
 
 assignment: lvalue ASSIGN exp ()
 
 ifThenElse: IF exp THEN exp ELSE exp ()
 
-ifThen: IF exp THEN exp ()
+ifThen: IF exp THEN exp %prec ELSEPRE ()
 
 while: WHILE exp DO exp ()
 
