@@ -1,222 +1,344 @@
-40 rules not reduced
+110 shift/reduce conflicts
+20 rules not reduced
 
-warning: rule <exp : NIL > will never be reduced
-warning: rule <exp : LPAREN expp RPAREN > will never be reduced
-warning: rule <exp : lvalue > will never be reduced
-warning: rule <exp : INT > will never be reduced
-warning: rule <exp : STRING > will never be reduced
-warning: rule <exp : negation > will never be reduced
-warning: rule <exp : arithmetic > will never be reduced
-warning: rule <exp : comparison > will never be reduced
-warning: rule <exp : boolcomp > will never be reduced
-warning: rule <expp : exp SEMICOLON expp > will never be reduced
-warning: rule <expp : exp > will never be reduced
-warning: rule <arithmetic : exp op exp > will never be reduced
-warning: rule <comparison : exp comp exp > will never be reduced
-warning: rule <boolcomp : exp bool exp > will never be reduced
-warning: rule <op : PLUS > will never be reduced
-warning: rule <op : MINUS > will never be reduced
-warning: rule <op : TIMES > will never be reduced
-warning: rule <op : DIVIDE > will never be reduced
-warning: rule <comp : EQ > will never be reduced
-warning: rule <comp : NEQ > will never be reduced
-warning: rule <comp : LT > will never be reduced
-warning: rule <comp : LE > will never be reduced
-warning: rule <comp : GT > will never be reduced
-warning: rule <comp : GE > will never be reduced
-warning: rule <bool : AND > will never be reduced
-warning: rule <bool : OR > will never be reduced
-warning: rule <negation : MINUS exp > will never be reduced
-warning: rule <unit : LPAREN RPAREN > will never be reduced
+warning: rule <expseq : expP > will never be reduced
+warning: rule <expseq : > will never be reduced
 warning: rule <decs : dec decs > will never be reduced
 warning: rule <decs : dec > will never be reduced
 warning: rule <dec : tydec > will never be reduced
 warning: rule <dec : vardec > will never be reduced
 warning: rule <dec : fundec > will never be reduced
+warning: rule <tydec : TYPE ID EQ ty > will never be reduced
+warning: rule <ty : ID > will never be reduced
+warning: rule <ty : LBRACE tyfields RBRACE > will never be reduced
+warning: rule <ty : ARRAY OF ID > will never be reduced
+warning: rule <tyfields : > will never be reduced
+warning: rule <tyfields : ID COLON ID tyfieldsP > will never be reduced
+warning: rule <tyfieldsP : > will never be reduced
+warning: rule <tyfieldsP : COMMA ID COLON ID tyfieldsP > will never be reduced
 warning: rule <vardec : VAR ID ASSIGN exp > will never be reduced
 warning: rule <vardec : VAR ID COLON ID ASSIGN exp > will never be reduced
 warning: rule <fundec : FUNCTION ID LPAREN tyfields RPAREN EQ exp > will never be reduced
 warning: rule <fundec : FUNCTION ID LPAREN tyfields RPAREN COLON ID EQ exp > will never be reduced
-warning: rule <lvalue : ID > will never be reduced
-warning: rule <lvalue : lvalue DOT ID > will never be reduced
-warning: rule <lvalue : lvalue LBRACK exp RBRACK > will never be reduced
+warning: rule <let : LET decs IN expseq END > will never be reduced
+error:  state 24: shift/reduce conflict (shift LBRACK, reduce by rule 64)
+error:  state 53: shift/reduce conflict (shift OR, reduce by rule 67)
+error:  state 53: shift/reduce conflict (shift AND, reduce by rule 67)
+error:  state 53: shift/reduce conflict (shift GE, reduce by rule 67)
+error:  state 53: shift/reduce conflict (shift GT, reduce by rule 67)
+error:  state 53: shift/reduce conflict (shift LE, reduce by rule 67)
+error:  state 53: shift/reduce conflict (shift LT, reduce by rule 67)
+error:  state 53: shift/reduce conflict (shift NEQ, reduce by rule 67)
+error:  state 53: shift/reduce conflict (shift EQ, reduce by rule 67)
+error:  state 53: shift/reduce conflict (shift DIVIDE, reduce by rule 67)
+error:  state 53: shift/reduce conflict (shift TIMES, reduce by rule 67)
+error:  state 53: shift/reduce conflict (shift MINUS, reduce by rule 67)
+error:  state 53: shift/reduce conflict (shift PLUS, reduce by rule 67)
+error:  state 56: shift/reduce conflict (shift OR, reduce by rule 26)
+error:  state 56: shift/reduce conflict (shift AND, reduce by rule 26)
+error:  state 56: shift/reduce conflict (shift GE, reduce by rule 26)
+error:  state 56: shift/reduce conflict (shift GT, reduce by rule 26)
+error:  state 56: shift/reduce conflict (shift LE, reduce by rule 26)
+error:  state 56: shift/reduce conflict (shift LT, reduce by rule 26)
+error:  state 56: shift/reduce conflict (shift NEQ, reduce by rule 26)
+error:  state 56: shift/reduce conflict (shift EQ, reduce by rule 26)
+error:  state 56: shift/reduce conflict (shift DIVIDE, reduce by rule 26)
+error:  state 56: shift/reduce conflict (shift TIMES, reduce by rule 26)
+error:  state 56: shift/reduce conflict (shift MINUS, reduce by rule 26)
+error:  state 56: shift/reduce conflict (shift PLUS, reduce by rule 26)
+error:  state 57: shift/reduce conflict (shift OR, reduce by rule 27)
+error:  state 57: shift/reduce conflict (shift AND, reduce by rule 27)
+error:  state 57: shift/reduce conflict (shift GE, reduce by rule 27)
+error:  state 57: shift/reduce conflict (shift GT, reduce by rule 27)
+error:  state 57: shift/reduce conflict (shift LE, reduce by rule 27)
+error:  state 57: shift/reduce conflict (shift LT, reduce by rule 27)
+error:  state 57: shift/reduce conflict (shift NEQ, reduce by rule 27)
+error:  state 57: shift/reduce conflict (shift EQ, reduce by rule 27)
+error:  state 57: shift/reduce conflict (shift DIVIDE, reduce by rule 27)
+error:  state 57: shift/reduce conflict (shift TIMES, reduce by rule 27)
+error:  state 57: shift/reduce conflict (shift MINUS, reduce by rule 27)
+error:  state 57: shift/reduce conflict (shift PLUS, reduce by rule 27)
+error:  state 58: shift/reduce conflict (shift OR, reduce by rule 28)
+error:  state 58: shift/reduce conflict (shift AND, reduce by rule 28)
+error:  state 58: shift/reduce conflict (shift GE, reduce by rule 28)
+error:  state 58: shift/reduce conflict (shift GT, reduce by rule 28)
+error:  state 58: shift/reduce conflict (shift LE, reduce by rule 28)
+error:  state 58: shift/reduce conflict (shift LT, reduce by rule 28)
+error:  state 58: shift/reduce conflict (shift NEQ, reduce by rule 28)
+error:  state 58: shift/reduce conflict (shift EQ, reduce by rule 28)
+error:  state 58: shift/reduce conflict (shift DIVIDE, reduce by rule 28)
+error:  state 58: shift/reduce conflict (shift TIMES, reduce by rule 28)
+error:  state 58: shift/reduce conflict (shift MINUS, reduce by rule 28)
+error:  state 58: shift/reduce conflict (shift PLUS, reduce by rule 28)
+error:  state 70: shift/reduce conflict (shift OR, reduce by rule 70)
+error:  state 70: shift/reduce conflict (shift AND, reduce by rule 70)
+error:  state 70: shift/reduce conflict (shift GE, reduce by rule 70)
+error:  state 70: shift/reduce conflict (shift GT, reduce by rule 70)
+error:  state 70: shift/reduce conflict (shift LE, reduce by rule 70)
+error:  state 70: shift/reduce conflict (shift LT, reduce by rule 70)
+error:  state 70: shift/reduce conflict (shift NEQ, reduce by rule 70)
+error:  state 70: shift/reduce conflict (shift EQ, reduce by rule 70)
+error:  state 70: shift/reduce conflict (shift DIVIDE, reduce by rule 70)
+error:  state 70: shift/reduce conflict (shift TIMES, reduce by rule 70)
+error:  state 70: shift/reduce conflict (shift MINUS, reduce by rule 70)
+error:  state 70: shift/reduce conflict (shift PLUS, reduce by rule 70)
+error:  state 71: shift/reduce conflict (shift ELSE, reduce by rule 69)
+error:  state 71: shift/reduce conflict (shift OR, reduce by rule 69)
+error:  state 71: shift/reduce conflict (shift AND, reduce by rule 69)
+error:  state 71: shift/reduce conflict (shift GE, reduce by rule 69)
+error:  state 71: shift/reduce conflict (shift GT, reduce by rule 69)
+error:  state 71: shift/reduce conflict (shift LE, reduce by rule 69)
+error:  state 71: shift/reduce conflict (shift LT, reduce by rule 69)
+error:  state 71: shift/reduce conflict (shift NEQ, reduce by rule 69)
+error:  state 71: shift/reduce conflict (shift EQ, reduce by rule 69)
+error:  state 71: shift/reduce conflict (shift DIVIDE, reduce by rule 69)
+error:  state 71: shift/reduce conflict (shift TIMES, reduce by rule 69)
+error:  state 71: shift/reduce conflict (shift MINUS, reduce by rule 69)
+error:  state 71: shift/reduce conflict (shift PLUS, reduce by rule 69)
+error:  state 83: shift/reduce conflict (shift OR, reduce by rule 68)
+error:  state 83: shift/reduce conflict (shift AND, reduce by rule 68)
+error:  state 83: shift/reduce conflict (shift GE, reduce by rule 68)
+error:  state 83: shift/reduce conflict (shift GT, reduce by rule 68)
+error:  state 83: shift/reduce conflict (shift LE, reduce by rule 68)
+error:  state 83: shift/reduce conflict (shift LT, reduce by rule 68)
+error:  state 83: shift/reduce conflict (shift NEQ, reduce by rule 68)
+error:  state 83: shift/reduce conflict (shift EQ, reduce by rule 68)
+error:  state 83: shift/reduce conflict (shift DIVIDE, reduce by rule 68)
+error:  state 83: shift/reduce conflict (shift TIMES, reduce by rule 68)
+error:  state 83: shift/reduce conflict (shift MINUS, reduce by rule 68)
+error:  state 83: shift/reduce conflict (shift PLUS, reduce by rule 68)
+error:  state 86: shift/reduce conflict (shift OR, reduce by rule 46)
+error:  state 86: shift/reduce conflict (shift AND, reduce by rule 46)
+error:  state 86: shift/reduce conflict (shift GE, reduce by rule 46)
+error:  state 86: shift/reduce conflict (shift GT, reduce by rule 46)
+error:  state 86: shift/reduce conflict (shift LE, reduce by rule 46)
+error:  state 86: shift/reduce conflict (shift LT, reduce by rule 46)
+error:  state 86: shift/reduce conflict (shift NEQ, reduce by rule 46)
+error:  state 86: shift/reduce conflict (shift EQ, reduce by rule 46)
+error:  state 86: shift/reduce conflict (shift DIVIDE, reduce by rule 46)
+error:  state 86: shift/reduce conflict (shift TIMES, reduce by rule 46)
+error:  state 86: shift/reduce conflict (shift MINUS, reduce by rule 46)
+error:  state 86: shift/reduce conflict (shift PLUS, reduce by rule 46)
+error:  state 90: shift/reduce conflict (shift OR, reduce by rule 71)
+error:  state 90: shift/reduce conflict (shift AND, reduce by rule 71)
+error:  state 90: shift/reduce conflict (shift GE, reduce by rule 71)
+error:  state 90: shift/reduce conflict (shift GT, reduce by rule 71)
+error:  state 90: shift/reduce conflict (shift LE, reduce by rule 71)
+error:  state 90: shift/reduce conflict (shift LT, reduce by rule 71)
+error:  state 90: shift/reduce conflict (shift NEQ, reduce by rule 71)
+error:  state 90: shift/reduce conflict (shift EQ, reduce by rule 71)
+error:  state 90: shift/reduce conflict (shift DIVIDE, reduce by rule 71)
+error:  state 90: shift/reduce conflict (shift TIMES, reduce by rule 71)
+error:  state 90: shift/reduce conflict (shift MINUS, reduce by rule 71)
+error:  state 90: shift/reduce conflict (shift PLUS, reduce by rule 71)
 
 state 0:
 
-	program : . tydec 
+	program : . exp 
 
-	TYPE	shift 2
+	ID	shift 24
+	INT	shift 23
+	STRING	shift 22
+	LPAREN	shift 21
+	MINUS	shift 20
+	IF	shift 19
+	WHILE	shift 18
+	FOR	shift 17
+	BREAK	shift 16
+	NIL	shift 15
 
-	program	goto 22
-	tydec	goto 1
+	exp	goto 14
+	program	goto 94
+	lvalue	goto 13
+	unit	goto 12
+	negation	goto 11
+	comparison	goto 10
+	arithmetic	goto 9
+	boolcomp	goto 8
+	record	goto 7
+	array	goto 6
+	assignment	goto 5
+	ifThenElse	goto 4
+	ifThen	goto 3
+	while	goto 2
+	forloop	goto 1
 
 	.	error
 
 
 state 1:
 
-	program : tydec .  (reduce by rule 0)
+	exp : forloop .  (reduce by rule 16)
 
 
 
-	.	reduce by rule 0
+	.	reduce by rule 16
 
 
 state 2:
 
-	tydec : TYPE . ID EQ ty 
-
-	ID	shift 3
+	exp : while .  (reduce by rule 15)
 
 
-	.	error
+
+	.	reduce by rule 15
 
 
 state 3:
 
-	tydec : TYPE ID . EQ ty 
-
-	EQ	shift 4
+	exp : ifThen .  (reduce by rule 14)
 
 
-	.	error
+
+	.	reduce by rule 14
 
 
 state 4:
 
-	tydec : TYPE ID EQ . ty 
+	exp : ifThenElse .  (reduce by rule 13)
 
-	ID	shift 8
-	LBRACE	shift 7
-	ARRAY	shift 6
 
-	ty	goto 5
 
-	.	error
+	.	reduce by rule 13
 
 
 state 5:
 
-	tydec : TYPE ID EQ ty .  (reduce by rule 34)
+	exp : assignment .  (reduce by rule 12)
 
 
 
-	.	reduce by rule 34
+	.	reduce by rule 12
 
 
 state 6:
 
-	ty : ARRAY . OF ID 
-
-	OF	shift 9
+	exp : array .  (reduce by rule 11)
 
 
-	.	error
+
+	.	reduce by rule 11
 
 
 state 7:
 
-	ty : LBRACE . tyfields RBRACE 
+	exp : record .  (reduce by rule 10)
 
-	ID	shift 11
 
-	tyfields	goto 10
 
-	.	reduce by rule 38
+	.	reduce by rule 10
 
 
 state 8:
 
-	ty : ID .  (reduce by rule 35)
+	exp : boolcomp .  (reduce by rule 9)
 
 
 
-	.	reduce by rule 35
+	.	reduce by rule 9
 
 
 state 9:
 
-	ty : ARRAY OF . ID 
-
-	ID	shift 12
+	exp : arithmetic .  (reduce by rule 7)
 
 
-	.	error
+
+	.	reduce by rule 7
 
 
 state 10:
 
-	ty : LBRACE tyfields . RBRACE 
-
-	RBRACE	shift 13
+	exp : comparison .  (reduce by rule 8)
 
 
-	.	error
+
+	.	reduce by rule 8
 
 
 state 11:
 
-	tyfields : ID . COLON ID tyfieldsP 
-
-	COLON	shift 14
+	exp : negation .  (reduce by rule 6)
 
 
-	.	error
+
+	.	reduce by rule 6
 
 
 state 12:
 
-	ty : ARRAY OF ID .  (reduce by rule 37)
+	exp : unit .  (reduce by rule 18)
 
 
 
-	.	reduce by rule 37
+	.	reduce by rule 18
 
 
 state 13:
 
-	ty : LBRACE tyfields RBRACE .  (reduce by rule 36)
+	exp : lvalue .  (reduce by rule 3)
+	lvalue : lvalue . DOT ID 
+	lvalue : lvalue . LBRACK exp RBRACK 
+	assignment : lvalue . ASSIGN exp 
+
+	LBRACK	shift 27
+	DOT	shift 26
+	ASSIGN	shift 25
 
 
-
-	.	reduce by rule 36
+	.	reduce by rule 3
 
 
 state 14:
 
-	tyfields : ID COLON . ID tyfieldsP 
+	program : exp .  (reduce by rule 0)
+	comparison : exp . comp exp 
+	arithmetic : exp . op exp 
+	boolcomp : exp . bool exp 
 
-	ID	shift 15
+	PLUS	shift 42
+	MINUS	shift 41
+	TIMES	shift 40
+	DIVIDE	shift 39
+	EQ	shift 38
+	NEQ	shift 37
+	LT	shift 36
+	LE	shift 35
+	GT	shift 34
+	GE	shift 33
+	AND	shift 32
+	OR	shift 31
 
+	bool	goto 30
+	comp	goto 29
+	op	goto 28
 
-	.	error
+	.	reduce by rule 0
 
 
 state 15:
 
-	tyfields : ID COLON ID . tyfieldsP 
+	exp : NIL .  (reduce by rule 1)
 
-	COMMA	shift 17
 
-	tyfieldsP	goto 16
 
-	.	reduce by rule 40
+	.	reduce by rule 1
 
 
 state 16:
 
-	tyfields : ID COLON ID tyfieldsP .  (reduce by rule 39)
+	exp : BREAK .  (reduce by rule 17)
 
 
 
-	.	reduce by rule 39
+	.	reduce by rule 17
 
 
 state 17:
 
-	tyfieldsP : COMMA . ID COLON ID tyfieldsP 
+	forloop : FOR . ID ASSIGN exp TO exp DO exp 
 
-	ID	shift 18
+	ID	shift 43
 
 
 	.	error
@@ -224,45 +346,1718 @@ state 17:
 
 state 18:
 
-	tyfieldsP : COMMA ID . COLON ID tyfieldsP 
+	while : WHILE . exp DO exp 
 
-	COLON	shift 19
+	ID	shift 24
+	INT	shift 23
+	STRING	shift 22
+	LPAREN	shift 21
+	MINUS	shift 20
+	IF	shift 19
+	WHILE	shift 18
+	FOR	shift 17
+	BREAK	shift 16
+	NIL	shift 15
 
+	exp	goto 44
+	lvalue	goto 13
+	unit	goto 12
+	negation	goto 11
+	comparison	goto 10
+	arithmetic	goto 9
+	boolcomp	goto 8
+	record	goto 7
+	array	goto 6
+	assignment	goto 5
+	ifThenElse	goto 4
+	ifThen	goto 3
+	while	goto 2
+	forloop	goto 1
 
 	.	error
 
 
 state 19:
 
-	tyfieldsP : COMMA ID COLON . ID tyfieldsP 
+	ifThenElse : IF . exp THEN exp ELSE exp 
+	ifThen : IF . exp THEN exp 
 
-	ID	shift 20
+	ID	shift 24
+	INT	shift 23
+	STRING	shift 22
+	LPAREN	shift 21
+	MINUS	shift 20
+	IF	shift 19
+	WHILE	shift 18
+	FOR	shift 17
+	BREAK	shift 16
+	NIL	shift 15
 
+	exp	goto 45
+	lvalue	goto 13
+	unit	goto 12
+	negation	goto 11
+	comparison	goto 10
+	arithmetic	goto 9
+	boolcomp	goto 8
+	record	goto 7
+	array	goto 6
+	assignment	goto 5
+	ifThenElse	goto 4
+	ifThen	goto 3
+	while	goto 2
+	forloop	goto 1
 
 	.	error
 
 
 state 20:
 
-	tyfieldsP : COMMA ID COLON ID . tyfieldsP 
+	negation : MINUS . exp 
 
-	COMMA	shift 17
+	ID	shift 24
+	INT	shift 23
+	STRING	shift 22
+	LPAREN	shift 21
+	MINUS	shift 20
+	IF	shift 19
+	WHILE	shift 18
+	FOR	shift 17
+	BREAK	shift 16
+	NIL	shift 15
 
-	tyfieldsP	goto 21
+	exp	goto 46
+	lvalue	goto 13
+	unit	goto 12
+	negation	goto 11
+	comparison	goto 10
+	arithmetic	goto 9
+	boolcomp	goto 8
+	record	goto 7
+	array	goto 6
+	assignment	goto 5
+	ifThenElse	goto 4
+	ifThen	goto 3
+	while	goto 2
+	forloop	goto 1
 
-	.	reduce by rule 40
+	.	error
 
 
 state 21:
 
-	tyfieldsP : COMMA ID COLON ID tyfieldsP .  (reduce by rule 41)
+	exp : LPAREN . expP RPAREN 
+	unit : LPAREN . RPAREN 
+
+	ID	shift 24
+	INT	shift 23
+	STRING	shift 22
+	LPAREN	shift 21
+	RPAREN	shift 49
+	MINUS	shift 20
+	IF	shift 19
+	WHILE	shift 18
+	FOR	shift 17
+	BREAK	shift 16
+	NIL	shift 15
+
+	exp	goto 48
+	lvalue	goto 13
+	unit	goto 12
+	negation	goto 11
+	comparison	goto 10
+	arithmetic	goto 9
+	boolcomp	goto 8
+	expP	goto 47
+	record	goto 7
+	array	goto 6
+	assignment	goto 5
+	ifThenElse	goto 4
+	ifThen	goto 3
+	while	goto 2
+	forloop	goto 1
+
+	.	error
 
 
+state 22:
+
+	exp : STRING .  (reduce by rule 5)
+
+
+
+	.	reduce by rule 5
+
+
+state 23:
+
+	exp : INT .  (reduce by rule 4)
+
+
+
+	.	reduce by rule 4
+
+error:  state 24: shift/reduce conflict (shift LBRACK, reduce by rule 64)
+
+state 24:
+
+	exp : ID . LPAREN args RPAREN 
+	lvalue : ID .  (reduce by rule 64)
+	record : ID . LBRACE ID EQ exp recP RBRACE 
+	array : ID . LBRACK exp RBRACK OF exp 
+
+	LPAREN	shift 52
+	LBRACK	shift 51
+	LBRACE	shift 50
+
+
+	.	reduce by rule 64
+
+
+state 25:
+
+	assignment : lvalue ASSIGN . exp 
+
+	ID	shift 24
+	INT	shift 23
+	STRING	shift 22
+	LPAREN	shift 21
+	MINUS	shift 20
+	IF	shift 19
+	WHILE	shift 18
+	FOR	shift 17
+	BREAK	shift 16
+	NIL	shift 15
+
+	exp	goto 53
+	lvalue	goto 13
+	unit	goto 12
+	negation	goto 11
+	comparison	goto 10
+	arithmetic	goto 9
+	boolcomp	goto 8
+	record	goto 7
+	array	goto 6
+	assignment	goto 5
+	ifThenElse	goto 4
+	ifThen	goto 3
+	while	goto 2
+	forloop	goto 1
+
+	.	error
+
+
+state 26:
+
+	lvalue : lvalue DOT . ID 
+
+	ID	shift 54
+
+
+	.	error
+
+
+state 27:
+
+	lvalue : lvalue LBRACK . exp RBRACK 
+
+	ID	shift 24
+	INT	shift 23
+	STRING	shift 22
+	LPAREN	shift 21
+	MINUS	shift 20
+	IF	shift 19
+	WHILE	shift 18
+	FOR	shift 17
+	BREAK	shift 16
+	NIL	shift 15
+
+	exp	goto 55
+	lvalue	goto 13
+	unit	goto 12
+	negation	goto 11
+	comparison	goto 10
+	arithmetic	goto 9
+	boolcomp	goto 8
+	record	goto 7
+	array	goto 6
+	assignment	goto 5
+	ifThenElse	goto 4
+	ifThen	goto 3
+	while	goto 2
+	forloop	goto 1
+
+	.	error
+
+
+state 28:
+
+	arithmetic : exp op . exp 
+
+	ID	shift 24
+	INT	shift 23
+	STRING	shift 22
+	LPAREN	shift 21
+	MINUS	shift 20
+	IF	shift 19
+	WHILE	shift 18
+	FOR	shift 17
+	BREAK	shift 16
+	NIL	shift 15
+
+	exp	goto 56
+	lvalue	goto 13
+	unit	goto 12
+	negation	goto 11
+	comparison	goto 10
+	arithmetic	goto 9
+	boolcomp	goto 8
+	record	goto 7
+	array	goto 6
+	assignment	goto 5
+	ifThenElse	goto 4
+	ifThen	goto 3
+	while	goto 2
+	forloop	goto 1
+
+	.	error
+
+
+state 29:
+
+	comparison : exp comp . exp 
+
+	ID	shift 24
+	INT	shift 23
+	STRING	shift 22
+	LPAREN	shift 21
+	MINUS	shift 20
+	IF	shift 19
+	WHILE	shift 18
+	FOR	shift 17
+	BREAK	shift 16
+	NIL	shift 15
+
+	exp	goto 57
+	lvalue	goto 13
+	unit	goto 12
+	negation	goto 11
+	comparison	goto 10
+	arithmetic	goto 9
+	boolcomp	goto 8
+	record	goto 7
+	array	goto 6
+	assignment	goto 5
+	ifThenElse	goto 4
+	ifThen	goto 3
+	while	goto 2
+	forloop	goto 1
+
+	.	error
+
+
+state 30:
+
+	boolcomp : exp bool . exp 
+
+	ID	shift 24
+	INT	shift 23
+	STRING	shift 22
+	LPAREN	shift 21
+	MINUS	shift 20
+	IF	shift 19
+	WHILE	shift 18
+	FOR	shift 17
+	BREAK	shift 16
+	NIL	shift 15
+
+	exp	goto 58
+	lvalue	goto 13
+	unit	goto 12
+	negation	goto 11
+	comparison	goto 10
+	arithmetic	goto 9
+	boolcomp	goto 8
+	record	goto 7
+	array	goto 6
+	assignment	goto 5
+	ifThenElse	goto 4
+	ifThen	goto 3
+	while	goto 2
+	forloop	goto 1
+
+	.	error
+
+
+state 31:
+
+	bool : OR .  (reduce by rule 40)
+
+
+
+	.	reduce by rule 40
+
+
+state 32:
+
+	bool : AND .  (reduce by rule 39)
+
+
+
+	.	reduce by rule 39
+
+
+state 33:
+
+	comp : GE .  (reduce by rule 38)
+
+
+
+	.	reduce by rule 38
+
+
+state 34:
+
+	comp : GT .  (reduce by rule 37)
+
+
+
+	.	reduce by rule 37
+
+
+state 35:
+
+	comp : LE .  (reduce by rule 36)
+
+
+
+	.	reduce by rule 36
+
+
+state 36:
+
+	comp : LT .  (reduce by rule 35)
+
+
+
+	.	reduce by rule 35
+
+
+state 37:
+
+	comp : NEQ .  (reduce by rule 34)
+
+
+
+	.	reduce by rule 34
+
+
+state 38:
+
+	comp : EQ .  (reduce by rule 33)
+
+
+
+	.	reduce by rule 33
+
+
+state 39:
+
+	op : DIVIDE .  (reduce by rule 32)
+
+
+
+	.	reduce by rule 32
+
+
+state 40:
+
+	op : TIMES .  (reduce by rule 31)
+
+
+
+	.	reduce by rule 31
+
+
+state 41:
+
+	op : MINUS .  (reduce by rule 30)
+
+
+
+	.	reduce by rule 30
+
+
+state 42:
+
+	op : PLUS .  (reduce by rule 29)
+
+
+
+	.	reduce by rule 29
+
+
+state 43:
+
+	forloop : FOR ID . ASSIGN exp TO exp DO exp 
+
+	ASSIGN	shift 59
+
+
+	.	error
+
+
+state 44:
+
+	comparison : exp . comp exp 
+	arithmetic : exp . op exp 
+	boolcomp : exp . bool exp 
+	while : WHILE exp . DO exp 
+
+	PLUS	shift 42
+	MINUS	shift 41
+	TIMES	shift 40
+	DIVIDE	shift 39
+	EQ	shift 38
+	NEQ	shift 37
+	LT	shift 36
+	LE	shift 35
+	GT	shift 34
+	GE	shift 33
+	AND	shift 32
+	OR	shift 31
+	DO	shift 60
+
+	bool	goto 30
+	comp	goto 29
+	op	goto 28
+
+	.	error
+
+
+state 45:
+
+	comparison : exp . comp exp 
+	arithmetic : exp . op exp 
+	boolcomp : exp . bool exp 
+	ifThenElse : IF exp . THEN exp ELSE exp 
+	ifThen : IF exp . THEN exp 
+
+	PLUS	shift 42
+	MINUS	shift 41
+	TIMES	shift 40
+	DIVIDE	shift 39
+	EQ	shift 38
+	NEQ	shift 37
+	LT	shift 36
+	LE	shift 35
+	GT	shift 34
+	GE	shift 33
+	AND	shift 32
+	OR	shift 31
+	THEN	shift 61
+
+	bool	goto 30
+	comp	goto 29
+	op	goto 28
+
+	.	error
+
+
+state 46:
+
+	negation : MINUS exp .  (reduce by rule 41)
+	comparison : exp . comp exp 
+	arithmetic : exp . op exp 
+	boolcomp : exp . bool exp 
+
+	TIMES	shift 40
+	DIVIDE	shift 39
+
+	bool	goto 30
+	comp	goto 29
+	op	goto 28
 
 	.	reduce by rule 41
 
 
-state 22:
+state 47:
+
+	exp : LPAREN expP . RPAREN 
+
+	RPAREN	shift 62
+
+
+	.	error
+
+
+state 48:
+
+	comparison : exp . comp exp 
+	arithmetic : exp . op exp 
+	boolcomp : exp . bool exp 
+	expP : exp . SEMICOLON expP 
+	expP : exp .  (reduce by rule 21)
+
+	SEMICOLON	shift 63
+	PLUS	shift 42
+	MINUS	shift 41
+	TIMES	shift 40
+	DIVIDE	shift 39
+	EQ	shift 38
+	NEQ	shift 37
+	LT	shift 36
+	LE	shift 35
+	GT	shift 34
+	GE	shift 33
+	AND	shift 32
+	OR	shift 31
+
+	bool	goto 30
+	comp	goto 29
+	op	goto 28
+
+	.	reduce by rule 21
+
+
+state 49:
+
+	unit : LPAREN RPAREN .  (reduce by rule 42)
+
+
+
+	.	reduce by rule 42
+
+
+state 50:
+
+	record : ID LBRACE . ID EQ exp recP RBRACE 
+
+	ID	shift 64
+
+
+	.	error
+
+
+state 51:
+
+	array : ID LBRACK . exp RBRACK OF exp 
+
+	ID	shift 24
+	INT	shift 23
+	STRING	shift 22
+	LPAREN	shift 21
+	MINUS	shift 20
+	IF	shift 19
+	WHILE	shift 18
+	FOR	shift 17
+	BREAK	shift 16
+	NIL	shift 15
+
+	exp	goto 65
+	lvalue	goto 13
+	unit	goto 12
+	negation	goto 11
+	comparison	goto 10
+	arithmetic	goto 9
+	boolcomp	goto 8
+	record	goto 7
+	array	goto 6
+	assignment	goto 5
+	ifThenElse	goto 4
+	ifThen	goto 3
+	while	goto 2
+	forloop	goto 1
+
+	.	error
+
+
+state 52:
+
+	exp : ID LPAREN . args RPAREN 
+
+	ID	shift 24
+	INT	shift 23
+	STRING	shift 22
+	LPAREN	shift 21
+	MINUS	shift 20
+	IF	shift 19
+	WHILE	shift 18
+	FOR	shift 17
+	BREAK	shift 16
+	NIL	shift 15
+
+	exp	goto 67
+	lvalue	goto 13
+	unit	goto 12
+	negation	goto 11
+	comparison	goto 10
+	arithmetic	goto 9
+	boolcomp	goto 8
+	record	goto 7
+	array	goto 6
+	assignment	goto 5
+	ifThenElse	goto 4
+	ifThen	goto 3
+	args	goto 66
+	while	goto 2
+	forloop	goto 1
+
+	.	error
+
+error:  state 53: shift/reduce conflict (shift OR, reduce by rule 67)
+error:  state 53: shift/reduce conflict (shift AND, reduce by rule 67)
+error:  state 53: shift/reduce conflict (shift GE, reduce by rule 67)
+error:  state 53: shift/reduce conflict (shift GT, reduce by rule 67)
+error:  state 53: shift/reduce conflict (shift LE, reduce by rule 67)
+error:  state 53: shift/reduce conflict (shift LT, reduce by rule 67)
+error:  state 53: shift/reduce conflict (shift NEQ, reduce by rule 67)
+error:  state 53: shift/reduce conflict (shift EQ, reduce by rule 67)
+error:  state 53: shift/reduce conflict (shift DIVIDE, reduce by rule 67)
+error:  state 53: shift/reduce conflict (shift TIMES, reduce by rule 67)
+error:  state 53: shift/reduce conflict (shift MINUS, reduce by rule 67)
+error:  state 53: shift/reduce conflict (shift PLUS, reduce by rule 67)
+
+state 53:
+
+	comparison : exp . comp exp 
+	arithmetic : exp . op exp 
+	boolcomp : exp . bool exp 
+	assignment : lvalue ASSIGN exp .  (reduce by rule 67)
+
+	PLUS	shift 42
+	MINUS	shift 41
+	TIMES	shift 40
+	DIVIDE	shift 39
+	EQ	shift 38
+	NEQ	shift 37
+	LT	shift 36
+	LE	shift 35
+	GT	shift 34
+	GE	shift 33
+	AND	shift 32
+	OR	shift 31
+
+	bool	goto 30
+	comp	goto 29
+	op	goto 28
+
+	.	reduce by rule 67
+
+
+state 54:
+
+	lvalue : lvalue DOT ID .  (reduce by rule 65)
+
+
+
+	.	reduce by rule 65
+
+
+state 55:
+
+	lvalue : lvalue LBRACK exp . RBRACK 
+	comparison : exp . comp exp 
+	arithmetic : exp . op exp 
+	boolcomp : exp . bool exp 
+
+	RBRACK	shift 68
+	PLUS	shift 42
+	MINUS	shift 41
+	TIMES	shift 40
+	DIVIDE	shift 39
+	EQ	shift 38
+	NEQ	shift 37
+	LT	shift 36
+	LE	shift 35
+	GT	shift 34
+	GE	shift 33
+	AND	shift 32
+	OR	shift 31
+
+	bool	goto 30
+	comp	goto 29
+	op	goto 28
+
+	.	error
+
+error:  state 56: shift/reduce conflict (shift OR, reduce by rule 26)
+error:  state 56: shift/reduce conflict (shift AND, reduce by rule 26)
+error:  state 56: shift/reduce conflict (shift GE, reduce by rule 26)
+error:  state 56: shift/reduce conflict (shift GT, reduce by rule 26)
+error:  state 56: shift/reduce conflict (shift LE, reduce by rule 26)
+error:  state 56: shift/reduce conflict (shift LT, reduce by rule 26)
+error:  state 56: shift/reduce conflict (shift NEQ, reduce by rule 26)
+error:  state 56: shift/reduce conflict (shift EQ, reduce by rule 26)
+error:  state 56: shift/reduce conflict (shift DIVIDE, reduce by rule 26)
+error:  state 56: shift/reduce conflict (shift TIMES, reduce by rule 26)
+error:  state 56: shift/reduce conflict (shift MINUS, reduce by rule 26)
+error:  state 56: shift/reduce conflict (shift PLUS, reduce by rule 26)
+
+state 56:
+
+	comparison : exp . comp exp 
+	arithmetic : exp . op exp 
+	arithmetic : exp op exp .  (reduce by rule 26)
+	boolcomp : exp . bool exp 
+
+	PLUS	shift 42
+	MINUS	shift 41
+	TIMES	shift 40
+	DIVIDE	shift 39
+	EQ	shift 38
+	NEQ	shift 37
+	LT	shift 36
+	LE	shift 35
+	GT	shift 34
+	GE	shift 33
+	AND	shift 32
+	OR	shift 31
+
+	bool	goto 30
+	comp	goto 29
+	op	goto 28
+
+	.	reduce by rule 26
+
+error:  state 57: shift/reduce conflict (shift OR, reduce by rule 27)
+error:  state 57: shift/reduce conflict (shift AND, reduce by rule 27)
+error:  state 57: shift/reduce conflict (shift GE, reduce by rule 27)
+error:  state 57: shift/reduce conflict (shift GT, reduce by rule 27)
+error:  state 57: shift/reduce conflict (shift LE, reduce by rule 27)
+error:  state 57: shift/reduce conflict (shift LT, reduce by rule 27)
+error:  state 57: shift/reduce conflict (shift NEQ, reduce by rule 27)
+error:  state 57: shift/reduce conflict (shift EQ, reduce by rule 27)
+error:  state 57: shift/reduce conflict (shift DIVIDE, reduce by rule 27)
+error:  state 57: shift/reduce conflict (shift TIMES, reduce by rule 27)
+error:  state 57: shift/reduce conflict (shift MINUS, reduce by rule 27)
+error:  state 57: shift/reduce conflict (shift PLUS, reduce by rule 27)
+
+state 57:
+
+	comparison : exp . comp exp 
+	comparison : exp comp exp .  (reduce by rule 27)
+	arithmetic : exp . op exp 
+	boolcomp : exp . bool exp 
+
+	PLUS	shift 42
+	MINUS	shift 41
+	TIMES	shift 40
+	DIVIDE	shift 39
+	EQ	shift 38
+	NEQ	shift 37
+	LT	shift 36
+	LE	shift 35
+	GT	shift 34
+	GE	shift 33
+	AND	shift 32
+	OR	shift 31
+
+	bool	goto 30
+	comp	goto 29
+	op	goto 28
+
+	.	reduce by rule 27
+
+error:  state 58: shift/reduce conflict (shift OR, reduce by rule 28)
+error:  state 58: shift/reduce conflict (shift AND, reduce by rule 28)
+error:  state 58: shift/reduce conflict (shift GE, reduce by rule 28)
+error:  state 58: shift/reduce conflict (shift GT, reduce by rule 28)
+error:  state 58: shift/reduce conflict (shift LE, reduce by rule 28)
+error:  state 58: shift/reduce conflict (shift LT, reduce by rule 28)
+error:  state 58: shift/reduce conflict (shift NEQ, reduce by rule 28)
+error:  state 58: shift/reduce conflict (shift EQ, reduce by rule 28)
+error:  state 58: shift/reduce conflict (shift DIVIDE, reduce by rule 28)
+error:  state 58: shift/reduce conflict (shift TIMES, reduce by rule 28)
+error:  state 58: shift/reduce conflict (shift MINUS, reduce by rule 28)
+error:  state 58: shift/reduce conflict (shift PLUS, reduce by rule 28)
+
+state 58:
+
+	comparison : exp . comp exp 
+	arithmetic : exp . op exp 
+	boolcomp : exp . bool exp 
+	boolcomp : exp bool exp .  (reduce by rule 28)
+
+	PLUS	shift 42
+	MINUS	shift 41
+	TIMES	shift 40
+	DIVIDE	shift 39
+	EQ	shift 38
+	NEQ	shift 37
+	LT	shift 36
+	LE	shift 35
+	GT	shift 34
+	GE	shift 33
+	AND	shift 32
+	OR	shift 31
+
+	bool	goto 30
+	comp	goto 29
+	op	goto 28
+
+	.	reduce by rule 28
+
+
+state 59:
+
+	forloop : FOR ID ASSIGN . exp TO exp DO exp 
+
+	ID	shift 24
+	INT	shift 23
+	STRING	shift 22
+	LPAREN	shift 21
+	MINUS	shift 20
+	IF	shift 19
+	WHILE	shift 18
+	FOR	shift 17
+	BREAK	shift 16
+	NIL	shift 15
+
+	exp	goto 69
+	lvalue	goto 13
+	unit	goto 12
+	negation	goto 11
+	comparison	goto 10
+	arithmetic	goto 9
+	boolcomp	goto 8
+	record	goto 7
+	array	goto 6
+	assignment	goto 5
+	ifThenElse	goto 4
+	ifThen	goto 3
+	while	goto 2
+	forloop	goto 1
+
+	.	error
+
+
+state 60:
+
+	while : WHILE exp DO . exp 
+
+	ID	shift 24
+	INT	shift 23
+	STRING	shift 22
+	LPAREN	shift 21
+	MINUS	shift 20
+	IF	shift 19
+	WHILE	shift 18
+	FOR	shift 17
+	BREAK	shift 16
+	NIL	shift 15
+
+	exp	goto 70
+	lvalue	goto 13
+	unit	goto 12
+	negation	goto 11
+	comparison	goto 10
+	arithmetic	goto 9
+	boolcomp	goto 8
+	record	goto 7
+	array	goto 6
+	assignment	goto 5
+	ifThenElse	goto 4
+	ifThen	goto 3
+	while	goto 2
+	forloop	goto 1
+
+	.	error
+
+
+state 61:
+
+	ifThenElse : IF exp THEN . exp ELSE exp 
+	ifThen : IF exp THEN . exp 
+
+	ID	shift 24
+	INT	shift 23
+	STRING	shift 22
+	LPAREN	shift 21
+	MINUS	shift 20
+	IF	shift 19
+	WHILE	shift 18
+	FOR	shift 17
+	BREAK	shift 16
+	NIL	shift 15
+
+	exp	goto 71
+	lvalue	goto 13
+	unit	goto 12
+	negation	goto 11
+	comparison	goto 10
+	arithmetic	goto 9
+	boolcomp	goto 8
+	record	goto 7
+	array	goto 6
+	assignment	goto 5
+	ifThenElse	goto 4
+	ifThen	goto 3
+	while	goto 2
+	forloop	goto 1
+
+	.	error
+
+
+state 62:
+
+	exp : LPAREN expP RPAREN .  (reduce by rule 2)
+
+
+
+	.	reduce by rule 2
+
+
+state 63:
+
+	expP : exp SEMICOLON . expP 
+
+	ID	shift 24
+	INT	shift 23
+	STRING	shift 22
+	LPAREN	shift 21
+	MINUS	shift 20
+	IF	shift 19
+	WHILE	shift 18
+	FOR	shift 17
+	BREAK	shift 16
+	NIL	shift 15
+
+	exp	goto 48
+	lvalue	goto 13
+	unit	goto 12
+	negation	goto 11
+	comparison	goto 10
+	arithmetic	goto 9
+	boolcomp	goto 8
+	expP	goto 72
+	record	goto 7
+	array	goto 6
+	assignment	goto 5
+	ifThenElse	goto 4
+	ifThen	goto 3
+	while	goto 2
+	forloop	goto 1
+
+	.	error
+
+
+state 64:
+
+	record : ID LBRACE ID . EQ exp recP RBRACE 
+
+	EQ	shift 73
+
+
+	.	error
+
+
+state 65:
+
+	comparison : exp . comp exp 
+	arithmetic : exp . op exp 
+	boolcomp : exp . bool exp 
+	array : ID LBRACK exp . RBRACK OF exp 
+
+	RBRACK	shift 74
+	PLUS	shift 42
+	MINUS	shift 41
+	TIMES	shift 40
+	DIVIDE	shift 39
+	EQ	shift 38
+	NEQ	shift 37
+	LT	shift 36
+	LE	shift 35
+	GT	shift 34
+	GE	shift 33
+	AND	shift 32
+	OR	shift 31
+
+	bool	goto 30
+	comp	goto 29
+	op	goto 28
+
+	.	error
+
+
+state 66:
+
+	exp : ID LPAREN args . RPAREN 
+
+	RPAREN	shift 75
+
+
+	.	error
+
+
+state 67:
+
+	comparison : exp . comp exp 
+	arithmetic : exp . op exp 
+	boolcomp : exp . bool exp 
+	args : exp . COMMA args 
+	args : exp .  (reduce by rule 25)
+
+	COMMA	shift 76
+	PLUS	shift 42
+	MINUS	shift 41
+	TIMES	shift 40
+	DIVIDE	shift 39
+	EQ	shift 38
+	NEQ	shift 37
+	LT	shift 36
+	LE	shift 35
+	GT	shift 34
+	GE	shift 33
+	AND	shift 32
+	OR	shift 31
+
+	bool	goto 30
+	comp	goto 29
+	op	goto 28
+
+	.	reduce by rule 25
+
+
+state 68:
+
+	lvalue : lvalue LBRACK exp RBRACK .  (reduce by rule 66)
+
+
+
+	.	reduce by rule 66
+
+
+state 69:
+
+	comparison : exp . comp exp 
+	arithmetic : exp . op exp 
+	boolcomp : exp . bool exp 
+	forloop : FOR ID ASSIGN exp . TO exp DO exp 
+
+	PLUS	shift 42
+	MINUS	shift 41
+	TIMES	shift 40
+	DIVIDE	shift 39
+	EQ	shift 38
+	NEQ	shift 37
+	LT	shift 36
+	LE	shift 35
+	GT	shift 34
+	GE	shift 33
+	AND	shift 32
+	OR	shift 31
+	TO	shift 77
+
+	bool	goto 30
+	comp	goto 29
+	op	goto 28
+
+	.	error
+
+error:  state 70: shift/reduce conflict (shift OR, reduce by rule 70)
+error:  state 70: shift/reduce conflict (shift AND, reduce by rule 70)
+error:  state 70: shift/reduce conflict (shift GE, reduce by rule 70)
+error:  state 70: shift/reduce conflict (shift GT, reduce by rule 70)
+error:  state 70: shift/reduce conflict (shift LE, reduce by rule 70)
+error:  state 70: shift/reduce conflict (shift LT, reduce by rule 70)
+error:  state 70: shift/reduce conflict (shift NEQ, reduce by rule 70)
+error:  state 70: shift/reduce conflict (shift EQ, reduce by rule 70)
+error:  state 70: shift/reduce conflict (shift DIVIDE, reduce by rule 70)
+error:  state 70: shift/reduce conflict (shift TIMES, reduce by rule 70)
+error:  state 70: shift/reduce conflict (shift MINUS, reduce by rule 70)
+error:  state 70: shift/reduce conflict (shift PLUS, reduce by rule 70)
+
+state 70:
+
+	comparison : exp . comp exp 
+	arithmetic : exp . op exp 
+	boolcomp : exp . bool exp 
+	while : WHILE exp DO exp .  (reduce by rule 70)
+
+	PLUS	shift 42
+	MINUS	shift 41
+	TIMES	shift 40
+	DIVIDE	shift 39
+	EQ	shift 38
+	NEQ	shift 37
+	LT	shift 36
+	LE	shift 35
+	GT	shift 34
+	GE	shift 33
+	AND	shift 32
+	OR	shift 31
+
+	bool	goto 30
+	comp	goto 29
+	op	goto 28
+
+	.	reduce by rule 70
+
+error:  state 71: shift/reduce conflict (shift ELSE, reduce by rule 69)
+error:  state 71: shift/reduce conflict (shift OR, reduce by rule 69)
+error:  state 71: shift/reduce conflict (shift AND, reduce by rule 69)
+error:  state 71: shift/reduce conflict (shift GE, reduce by rule 69)
+error:  state 71: shift/reduce conflict (shift GT, reduce by rule 69)
+error:  state 71: shift/reduce conflict (shift LE, reduce by rule 69)
+error:  state 71: shift/reduce conflict (shift LT, reduce by rule 69)
+error:  state 71: shift/reduce conflict (shift NEQ, reduce by rule 69)
+error:  state 71: shift/reduce conflict (shift EQ, reduce by rule 69)
+error:  state 71: shift/reduce conflict (shift DIVIDE, reduce by rule 69)
+error:  state 71: shift/reduce conflict (shift TIMES, reduce by rule 69)
+error:  state 71: shift/reduce conflict (shift MINUS, reduce by rule 69)
+error:  state 71: shift/reduce conflict (shift PLUS, reduce by rule 69)
+
+state 71:
+
+	comparison : exp . comp exp 
+	arithmetic : exp . op exp 
+	boolcomp : exp . bool exp 
+	ifThenElse : IF exp THEN exp . ELSE exp 
+	ifThen : IF exp THEN exp .  (reduce by rule 69)
+
+	PLUS	shift 42
+	MINUS	shift 41
+	TIMES	shift 40
+	DIVIDE	shift 39
+	EQ	shift 38
+	NEQ	shift 37
+	LT	shift 36
+	LE	shift 35
+	GT	shift 34
+	GE	shift 33
+	AND	shift 32
+	OR	shift 31
+	ELSE	shift 78
+
+	bool	goto 30
+	comp	goto 29
+	op	goto 28
+
+	.	reduce by rule 69
+
+
+state 72:
+
+	expP : exp SEMICOLON expP .  (reduce by rule 20)
+
+
+
+	.	reduce by rule 20
+
+
+state 73:
+
+	record : ID LBRACE ID EQ . exp recP RBRACE 
+
+	ID	shift 24
+	INT	shift 23
+	STRING	shift 22
+	LPAREN	shift 21
+	MINUS	shift 20
+	IF	shift 19
+	WHILE	shift 18
+	FOR	shift 17
+	BREAK	shift 16
+	NIL	shift 15
+
+	exp	goto 79
+	lvalue	goto 13
+	unit	goto 12
+	negation	goto 11
+	comparison	goto 10
+	arithmetic	goto 9
+	boolcomp	goto 8
+	record	goto 7
+	array	goto 6
+	assignment	goto 5
+	ifThenElse	goto 4
+	ifThen	goto 3
+	while	goto 2
+	forloop	goto 1
+
+	.	error
+
+
+state 74:
+
+	array : ID LBRACK exp RBRACK . OF exp 
+
+	OF	shift 80
+
+
+	.	error
+
+
+state 75:
+
+	exp : ID LPAREN args RPAREN .  (reduce by rule 19)
+
+
+
+	.	reduce by rule 19
+
+
+state 76:
+
+	args : exp COMMA . args 
+
+	ID	shift 24
+	INT	shift 23
+	STRING	shift 22
+	LPAREN	shift 21
+	MINUS	shift 20
+	IF	shift 19
+	WHILE	shift 18
+	FOR	shift 17
+	BREAK	shift 16
+	NIL	shift 15
+
+	exp	goto 67
+	lvalue	goto 13
+	unit	goto 12
+	negation	goto 11
+	comparison	goto 10
+	arithmetic	goto 9
+	boolcomp	goto 8
+	record	goto 7
+	array	goto 6
+	assignment	goto 5
+	ifThenElse	goto 4
+	ifThen	goto 3
+	args	goto 81
+	while	goto 2
+	forloop	goto 1
+
+	.	error
+
+
+state 77:
+
+	forloop : FOR ID ASSIGN exp TO . exp DO exp 
+
+	ID	shift 24
+	INT	shift 23
+	STRING	shift 22
+	LPAREN	shift 21
+	MINUS	shift 20
+	IF	shift 19
+	WHILE	shift 18
+	FOR	shift 17
+	BREAK	shift 16
+	NIL	shift 15
+
+	exp	goto 82
+	lvalue	goto 13
+	unit	goto 12
+	negation	goto 11
+	comparison	goto 10
+	arithmetic	goto 9
+	boolcomp	goto 8
+	record	goto 7
+	array	goto 6
+	assignment	goto 5
+	ifThenElse	goto 4
+	ifThen	goto 3
+	while	goto 2
+	forloop	goto 1
+
+	.	error
+
+
+state 78:
+
+	ifThenElse : IF exp THEN exp ELSE . exp 
+
+	ID	shift 24
+	INT	shift 23
+	STRING	shift 22
+	LPAREN	shift 21
+	MINUS	shift 20
+	IF	shift 19
+	WHILE	shift 18
+	FOR	shift 17
+	BREAK	shift 16
+	NIL	shift 15
+
+	exp	goto 83
+	lvalue	goto 13
+	unit	goto 12
+	negation	goto 11
+	comparison	goto 10
+	arithmetic	goto 9
+	boolcomp	goto 8
+	record	goto 7
+	array	goto 6
+	assignment	goto 5
+	ifThenElse	goto 4
+	ifThen	goto 3
+	while	goto 2
+	forloop	goto 1
+
+	.	error
+
+
+state 79:
+
+	comparison : exp . comp exp 
+	arithmetic : exp . op exp 
+	boolcomp : exp . bool exp 
+	record : ID LBRACE ID EQ exp . recP RBRACE 
+
+	COMMA	shift 85
+	PLUS	shift 42
+	MINUS	shift 41
+	TIMES	shift 40
+	DIVIDE	shift 39
+	EQ	shift 38
+	NEQ	shift 37
+	LT	shift 36
+	LE	shift 35
+	GT	shift 34
+	GE	shift 33
+	AND	shift 32
+	OR	shift 31
+
+	bool	goto 30
+	comp	goto 29
+	op	goto 28
+	recP	goto 84
+
+	.	reduce by rule 45
+
+
+state 80:
+
+	array : ID LBRACK exp RBRACK OF . exp 
+
+	ID	shift 24
+	INT	shift 23
+	STRING	shift 22
+	LPAREN	shift 21
+	MINUS	shift 20
+	IF	shift 19
+	WHILE	shift 18
+	FOR	shift 17
+	BREAK	shift 16
+	NIL	shift 15
+
+	exp	goto 86
+	lvalue	goto 13
+	unit	goto 12
+	negation	goto 11
+	comparison	goto 10
+	arithmetic	goto 9
+	boolcomp	goto 8
+	record	goto 7
+	array	goto 6
+	assignment	goto 5
+	ifThenElse	goto 4
+	ifThen	goto 3
+	while	goto 2
+	forloop	goto 1
+
+	.	error
+
+
+state 81:
+
+	args : exp COMMA args .  (reduce by rule 24)
+
+
+
+	.	reduce by rule 24
+
+
+state 82:
+
+	comparison : exp . comp exp 
+	arithmetic : exp . op exp 
+	boolcomp : exp . bool exp 
+	forloop : FOR ID ASSIGN exp TO exp . DO exp 
+
+	PLUS	shift 42
+	MINUS	shift 41
+	TIMES	shift 40
+	DIVIDE	shift 39
+	EQ	shift 38
+	NEQ	shift 37
+	LT	shift 36
+	LE	shift 35
+	GT	shift 34
+	GE	shift 33
+	AND	shift 32
+	OR	shift 31
+	DO	shift 87
+
+	bool	goto 30
+	comp	goto 29
+	op	goto 28
+
+	.	error
+
+error:  state 83: shift/reduce conflict (shift OR, reduce by rule 68)
+error:  state 83: shift/reduce conflict (shift AND, reduce by rule 68)
+error:  state 83: shift/reduce conflict (shift GE, reduce by rule 68)
+error:  state 83: shift/reduce conflict (shift GT, reduce by rule 68)
+error:  state 83: shift/reduce conflict (shift LE, reduce by rule 68)
+error:  state 83: shift/reduce conflict (shift LT, reduce by rule 68)
+error:  state 83: shift/reduce conflict (shift NEQ, reduce by rule 68)
+error:  state 83: shift/reduce conflict (shift EQ, reduce by rule 68)
+error:  state 83: shift/reduce conflict (shift DIVIDE, reduce by rule 68)
+error:  state 83: shift/reduce conflict (shift TIMES, reduce by rule 68)
+error:  state 83: shift/reduce conflict (shift MINUS, reduce by rule 68)
+error:  state 83: shift/reduce conflict (shift PLUS, reduce by rule 68)
+
+state 83:
+
+	comparison : exp . comp exp 
+	arithmetic : exp . op exp 
+	boolcomp : exp . bool exp 
+	ifThenElse : IF exp THEN exp ELSE exp .  (reduce by rule 68)
+
+	PLUS	shift 42
+	MINUS	shift 41
+	TIMES	shift 40
+	DIVIDE	shift 39
+	EQ	shift 38
+	NEQ	shift 37
+	LT	shift 36
+	LE	shift 35
+	GT	shift 34
+	GE	shift 33
+	AND	shift 32
+	OR	shift 31
+
+	bool	goto 30
+	comp	goto 29
+	op	goto 28
+
+	.	reduce by rule 68
+
+
+state 84:
+
+	record : ID LBRACE ID EQ exp recP . RBRACE 
+
+	RBRACE	shift 88
+
+
+	.	error
+
+
+state 85:
+
+	recP : COMMA . ID EQ exp recP 
+
+	ID	shift 89
+
+
+	.	error
+
+error:  state 86: shift/reduce conflict (shift OR, reduce by rule 46)
+error:  state 86: shift/reduce conflict (shift AND, reduce by rule 46)
+error:  state 86: shift/reduce conflict (shift GE, reduce by rule 46)
+error:  state 86: shift/reduce conflict (shift GT, reduce by rule 46)
+error:  state 86: shift/reduce conflict (shift LE, reduce by rule 46)
+error:  state 86: shift/reduce conflict (shift LT, reduce by rule 46)
+error:  state 86: shift/reduce conflict (shift NEQ, reduce by rule 46)
+error:  state 86: shift/reduce conflict (shift EQ, reduce by rule 46)
+error:  state 86: shift/reduce conflict (shift DIVIDE, reduce by rule 46)
+error:  state 86: shift/reduce conflict (shift TIMES, reduce by rule 46)
+error:  state 86: shift/reduce conflict (shift MINUS, reduce by rule 46)
+error:  state 86: shift/reduce conflict (shift PLUS, reduce by rule 46)
+
+state 86:
+
+	comparison : exp . comp exp 
+	arithmetic : exp . op exp 
+	boolcomp : exp . bool exp 
+	array : ID LBRACK exp RBRACK OF exp .  (reduce by rule 46)
+
+	PLUS	shift 42
+	MINUS	shift 41
+	TIMES	shift 40
+	DIVIDE	shift 39
+	EQ	shift 38
+	NEQ	shift 37
+	LT	shift 36
+	LE	shift 35
+	GT	shift 34
+	GE	shift 33
+	AND	shift 32
+	OR	shift 31
+
+	bool	goto 30
+	comp	goto 29
+	op	goto 28
+
+	.	reduce by rule 46
+
+
+state 87:
+
+	forloop : FOR ID ASSIGN exp TO exp DO . exp 
+
+	ID	shift 24
+	INT	shift 23
+	STRING	shift 22
+	LPAREN	shift 21
+	MINUS	shift 20
+	IF	shift 19
+	WHILE	shift 18
+	FOR	shift 17
+	BREAK	shift 16
+	NIL	shift 15
+
+	exp	goto 90
+	lvalue	goto 13
+	unit	goto 12
+	negation	goto 11
+	comparison	goto 10
+	arithmetic	goto 9
+	boolcomp	goto 8
+	record	goto 7
+	array	goto 6
+	assignment	goto 5
+	ifThenElse	goto 4
+	ifThen	goto 3
+	while	goto 2
+	forloop	goto 1
+
+	.	error
+
+
+state 88:
+
+	record : ID LBRACE ID EQ exp recP RBRACE .  (reduce by rule 43)
+
+
+
+	.	reduce by rule 43
+
+
+state 89:
+
+	recP : COMMA ID . EQ exp recP 
+
+	EQ	shift 91
+
+
+	.	error
+
+error:  state 90: shift/reduce conflict (shift OR, reduce by rule 71)
+error:  state 90: shift/reduce conflict (shift AND, reduce by rule 71)
+error:  state 90: shift/reduce conflict (shift GE, reduce by rule 71)
+error:  state 90: shift/reduce conflict (shift GT, reduce by rule 71)
+error:  state 90: shift/reduce conflict (shift LE, reduce by rule 71)
+error:  state 90: shift/reduce conflict (shift LT, reduce by rule 71)
+error:  state 90: shift/reduce conflict (shift NEQ, reduce by rule 71)
+error:  state 90: shift/reduce conflict (shift EQ, reduce by rule 71)
+error:  state 90: shift/reduce conflict (shift DIVIDE, reduce by rule 71)
+error:  state 90: shift/reduce conflict (shift TIMES, reduce by rule 71)
+error:  state 90: shift/reduce conflict (shift MINUS, reduce by rule 71)
+error:  state 90: shift/reduce conflict (shift PLUS, reduce by rule 71)
+
+state 90:
+
+	comparison : exp . comp exp 
+	arithmetic : exp . op exp 
+	boolcomp : exp . bool exp 
+	forloop : FOR ID ASSIGN exp TO exp DO exp .  (reduce by rule 71)
+
+	PLUS	shift 42
+	MINUS	shift 41
+	TIMES	shift 40
+	DIVIDE	shift 39
+	EQ	shift 38
+	NEQ	shift 37
+	LT	shift 36
+	LE	shift 35
+	GT	shift 34
+	GE	shift 33
+	AND	shift 32
+	OR	shift 31
+
+	bool	goto 30
+	comp	goto 29
+	op	goto 28
+
+	.	reduce by rule 71
+
+
+state 91:
+
+	recP : COMMA ID EQ . exp recP 
+
+	ID	shift 24
+	INT	shift 23
+	STRING	shift 22
+	LPAREN	shift 21
+	MINUS	shift 20
+	IF	shift 19
+	WHILE	shift 18
+	FOR	shift 17
+	BREAK	shift 16
+	NIL	shift 15
+
+	exp	goto 92
+	lvalue	goto 13
+	unit	goto 12
+	negation	goto 11
+	comparison	goto 10
+	arithmetic	goto 9
+	boolcomp	goto 8
+	record	goto 7
+	array	goto 6
+	assignment	goto 5
+	ifThenElse	goto 4
+	ifThen	goto 3
+	while	goto 2
+	forloop	goto 1
+
+	.	error
+
+
+state 92:
+
+	comparison : exp . comp exp 
+	arithmetic : exp . op exp 
+	boolcomp : exp . bool exp 
+	recP : COMMA ID EQ exp . recP 
+
+	COMMA	shift 85
+	PLUS	shift 42
+	MINUS	shift 41
+	TIMES	shift 40
+	DIVIDE	shift 39
+	EQ	shift 38
+	NEQ	shift 37
+	LT	shift 36
+	LE	shift 35
+	GT	shift 34
+	GE	shift 33
+	AND	shift 32
+	OR	shift 31
+
+	bool	goto 30
+	comp	goto 29
+	op	goto 28
+	recP	goto 93
+
+	.	reduce by rule 45
+
+
+state 93:
+
+	recP : COMMA ID EQ exp recP .  (reduce by rule 44)
+
+
+
+	.	reduce by rule 44
+
+
+state 94:
 
 
 	EOF	accept
@@ -270,5 +2065,5 @@ state 22:
 
 	.	error
 
-17 of 41 action table entries left after compaction
-6 goto table entries
+279 of 597 action table entries left after compaction
+392 goto table entries

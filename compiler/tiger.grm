@@ -13,7 +13,8 @@
   | UMINUS
 
 %nonterm  exp | program | decs | dec | tydec | vardec | fundec | ty | tyfields | tyfieldsP | lvalue | unit | negation
-  | bool | comp | op | comparison | arithmetic | boolcomp | expp
+  | bool | comp | op | comparison | arithmetic | boolcomp | expP | record | recP | array | assignment | ifThenElse
+  | ifThen | let | expseq | args | while | forloop
 
 %pos int
 %verbose
@@ -47,10 +48,10 @@
  *  to replace the two dummy productions below with an actual grammar. 
  *)
 
-program	: tydec ()
+program	: exp ()
 
 exp: NIL () 
-  | LPAREN expp RPAREN ()
+  | LPAREN expP RPAREN ()
   | lvalue ()
   | INT ()
   | STRING ()
@@ -58,16 +59,29 @@ exp: NIL ()
   | arithmetic ()
   | comparison ()
   | boolcomp ()
-  (* TODO: add empty let *)
-  (* TODO: add function call *)
+  | record ()
+  | array ()
+  | assignment ()
+  | ifThenElse ()
+  | ifThen ()
+  | while ()
+  | forloop ()
+  | BREAK ()
+  | unit ()
+  | ID LPAREN args RPAREN ()
 
-expp: exp SEMICOLON expp ()
+expP: exp SEMICOLON expP ()
+  | exp ()
+
+expseq: expP () 
+  | ()
+
+args: exp COMMA args ()
   | exp ()
 
 arithmetic: exp op exp ()
 
 comparison: exp comp exp ()
-
 
 boolcomp: exp bool exp ()
 
@@ -89,6 +103,13 @@ bool: AND ()
 negation: MINUS exp ()
 
 unit: LPAREN RPAREN ()
+
+record: ID LBRACE ID EQ exp recP RBRACE ()
+
+recP: COMMA ID EQ exp recP () 
+  | ()
+
+array: ID LBRACK exp RBRACK OF exp ()
 
 decs: dec decs ()
   | dec ()
@@ -119,5 +140,14 @@ lvalue: ID ()
   | lvalue DOT ID ()
   | lvalue LBRACK exp RBRACK ()
 
-(* Expressions *)
+assignment: lvalue ASSIGN exp ()
 
+ifThenElse: IF exp THEN exp ELSE exp ()
+
+ifThen: IF exp THEN exp ()
+
+while: WHILE exp DO exp ()
+
+forloop: FOR ID ASSIGN exp TO exp DO exp ()
+
+let: LET decs IN expseq END ()
