@@ -10,14 +10,24 @@
   | ARRAY | IF | THEN | ELSE | WHILE | FOR | TO | DO | LET | IN | END | OF 
   | BREAK | NIL
   | FUNCTION | VAR | TYPE 
+  | UMINUS
 
-%nonterm  exp | program | decs | dec | tydec | vardec | fundec | ty | tyfields | tyfieldsP | lvalue
+%nonterm  exp | program | decs | dec | tydec | vardec | fundec | ty | tyfields | tyfieldsP | lvalue | unit | negation
+  | bool | comp | op | comparison | arithmetic | boolcomp | expp
 
 %pos int
 %verbose
 %start program
 %eop EOF
 %noshift EOF
+
+(* Precedences *)
+%nonassoc OR
+%nonassoc AND
+%nonassoc EQ NEQ GT LT LE GE
+%left PLUS MINUS
+%left TIMES DIVIDE
+%left UMINUS
 
 %name Tiger
 
@@ -39,7 +49,46 @@
 
 program	: tydec ()
 
-exp: 			()
+exp: NIL () 
+  | LPAREN expp RPAREN ()
+  | lvalue ()
+  | INT ()
+  | STRING ()
+  | negation ()
+  | arithmetic ()
+  | comparison ()
+  | boolcomp ()
+  (* TODO: add empty let *)
+  (* TODO: add function call *)
+
+expp: exp SEMICOLON expp ()
+  | exp ()
+
+arithmetic: exp op exp ()
+
+comparison: exp comp exp ()
+
+
+boolcomp: exp bool exp ()
+
+op: PLUS ()
+  | MINUS ()
+  | TIMES ()
+  | DIVIDE ()
+
+comp: EQ ()
+  | NEQ ()
+  | LT ()
+  | LE ()
+  | GT ()
+  | GE ()
+
+bool: AND ()
+  | OR ()
+
+negation: MINUS exp ()
+
+unit: LPAREN RPAREN ()
 
 decs: dec decs ()
   | dec ()
@@ -69,3 +118,6 @@ fundec: FUNCTION ID LPAREN tyfields RPAREN EQ exp ()
 lvalue: ID () 
   | lvalue DOT ID ()
   | lvalue LBRACK exp RBRACK ()
+
+(* Expressions *)
+

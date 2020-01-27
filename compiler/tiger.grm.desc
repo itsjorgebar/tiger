@@ -1,6 +1,33 @@
-13 rules not reduced
+40 rules not reduced
 
-warning: rule <exp : > will never be reduced
+warning: rule <exp : NIL > will never be reduced
+warning: rule <exp : LPAREN expp RPAREN > will never be reduced
+warning: rule <exp : lvalue > will never be reduced
+warning: rule <exp : INT > will never be reduced
+warning: rule <exp : STRING > will never be reduced
+warning: rule <exp : negation > will never be reduced
+warning: rule <exp : arithmetic > will never be reduced
+warning: rule <exp : comparison > will never be reduced
+warning: rule <exp : boolcomp > will never be reduced
+warning: rule <expp : exp SEMICOLON expp > will never be reduced
+warning: rule <expp : exp > will never be reduced
+warning: rule <arithmetic : exp op exp > will never be reduced
+warning: rule <comparison : exp comp exp > will never be reduced
+warning: rule <boolcomp : exp bool exp > will never be reduced
+warning: rule <op : PLUS > will never be reduced
+warning: rule <op : MINUS > will never be reduced
+warning: rule <op : TIMES > will never be reduced
+warning: rule <op : DIVIDE > will never be reduced
+warning: rule <comp : EQ > will never be reduced
+warning: rule <comp : NEQ > will never be reduced
+warning: rule <comp : LT > will never be reduced
+warning: rule <comp : LE > will never be reduced
+warning: rule <comp : GT > will never be reduced
+warning: rule <comp : GE > will never be reduced
+warning: rule <bool : AND > will never be reduced
+warning: rule <bool : OR > will never be reduced
+warning: rule <negation : MINUS exp > will never be reduced
+warning: rule <unit : LPAREN RPAREN > will never be reduced
 warning: rule <decs : dec decs > will never be reduced
 warning: rule <decs : dec > will never be reduced
 warning: rule <dec : tydec > will never be reduced
@@ -70,11 +97,11 @@ state 4:
 
 state 5:
 
-	tydec : TYPE ID EQ ty .  (reduce by rule 7)
+	tydec : TYPE ID EQ ty .  (reduce by rule 34)
 
 
 
-	.	reduce by rule 7
+	.	reduce by rule 34
 
 
 state 6:
@@ -95,16 +122,16 @@ state 7:
 
 	tyfields	goto 10
 
-	.	reduce by rule 11
+	.	reduce by rule 38
 
 
 state 8:
 
-	ty : ID .  (reduce by rule 8)
+	ty : ID .  (reduce by rule 35)
 
 
 
-	.	reduce by rule 8
+	.	reduce by rule 35
 
 
 state 9:
@@ -139,20 +166,20 @@ state 11:
 
 state 12:
 
-	ty : ARRAY OF ID .  (reduce by rule 10)
+	ty : ARRAY OF ID .  (reduce by rule 37)
 
 
 
-	.	reduce by rule 10
+	.	reduce by rule 37
 
 
 state 13:
 
-	ty : LBRACE tyfields RBRACE .  (reduce by rule 9)
+	ty : LBRACE tyfields RBRACE .  (reduce by rule 36)
 
 
 
-	.	reduce by rule 9
+	.	reduce by rule 36
 
 
 state 14:
@@ -173,16 +200,16 @@ state 15:
 
 	tyfieldsP	goto 16
 
-	.	reduce by rule 13
+	.	reduce by rule 40
 
 
 state 16:
 
-	tyfields : ID COLON ID tyfieldsP .  (reduce by rule 12)
+	tyfields : ID COLON ID tyfieldsP .  (reduce by rule 39)
 
 
 
-	.	reduce by rule 12
+	.	reduce by rule 39
 
 
 state 17:
@@ -223,16 +250,16 @@ state 20:
 
 	tyfieldsP	goto 21
 
-	.	reduce by rule 13
+	.	reduce by rule 40
 
 
 state 21:
 
-	tyfieldsP : COMMA ID COLON ID tyfieldsP .  (reduce by rule 14)
+	tyfieldsP : COMMA ID COLON ID tyfieldsP .  (reduce by rule 41)
 
 
 
-	.	reduce by rule 14
+	.	reduce by rule 41
 
 
 state 22:
