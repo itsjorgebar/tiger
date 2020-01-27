@@ -69,6 +69,7 @@ exp: NIL ()
   | BREAK ()
   | unit ()
   | ID LPAREN args RPAREN ()
+  | let ()
 
 expP: exp SEMICOLON expP ()
   | exp ()
