@@ -1,18 +1,34 @@
+13 rules not reduced
+
+warning: rule <exp : > will never be reduced
+warning: rule <decs : dec decs > will never be reduced
+warning: rule <decs : dec > will never be reduced
+warning: rule <dec : tydec > will never be reduced
+warning: rule <dec : vardec > will never be reduced
+warning: rule <dec : fundec > will never be reduced
+warning: rule <vardec : VAR ID ASSIGN exp > will never be reduced
+warning: rule <vardec : VAR ID COLON ID ASSIGN exp > will never be reduced
+warning: rule <fundec : FUNCTION ID LPAREN tyfields RPAREN EQ exp > will never be reduced
+warning: rule <fundec : FUNCTION ID LPAREN tyfields RPAREN COLON ID EQ exp > will never be reduced
+warning: rule <lvalue : ID > will never be reduced
+warning: rule <lvalue : lvalue DOT ID > will never be reduced
+warning: rule <lvalue : lvalue LBRACK exp RBRACK > will never be reduced
 
 state 0:
 
-	program : . exp 
+	program : . tydec 
 
+	TYPE	shift 2
 
-	exp	goto 1
-	program	goto 2
+	program	goto 22
+	tydec	goto 1
 
-	.	reduce by rule 1
+	.	error
 
 
 state 1:
 
-	program : exp .  (reduce by rule 0)
+	program : tydec .  (reduce by rule 0)
 
 
 
@@ -21,11 +37,211 @@ state 1:
 
 state 2:
 
+	tydec : TYPE . ID EQ ty 
+
+	ID	shift 3
+
+
+	.	error
+
+
+state 3:
+
+	tydec : TYPE ID . EQ ty 
+
+	EQ	shift 4
+
+
+	.	error
+
+
+state 4:
+
+	tydec : TYPE ID EQ . ty 
+
+	ID	shift 8
+	LBRACE	shift 7
+	ARRAY	shift 6
+
+	ty	goto 5
+
+	.	error
+
+
+state 5:
+
+	tydec : TYPE ID EQ ty .  (reduce by rule 7)
+
+
+
+	.	reduce by rule 7
+
+
+state 6:
+
+	ty : ARRAY . OF ID 
+
+	OF	shift 9
+
+
+	.	error
+
+
+state 7:
+
+	ty : LBRACE . tyfields RBRACE 
+
+	ID	shift 11
+
+	tyfields	goto 10
+
+	.	reduce by rule 11
+
+
+state 8:
+
+	ty : ID .  (reduce by rule 8)
+
+
+
+	.	reduce by rule 8
+
+
+state 9:
+
+	ty : ARRAY OF . ID 
+
+	ID	shift 12
+
+
+	.	error
+
+
+state 10:
+
+	ty : LBRACE tyfields . RBRACE 
+
+	RBRACE	shift 13
+
+
+	.	error
+
+
+state 11:
+
+	tyfields : ID . COLON ID tyfieldsP 
+
+	COLON	shift 14
+
+
+	.	error
+
+
+state 12:
+
+	ty : ARRAY OF ID .  (reduce by rule 10)
+
+
+
+	.	reduce by rule 10
+
+
+state 13:
+
+	ty : LBRACE tyfields RBRACE .  (reduce by rule 9)
+
+
+
+	.	reduce by rule 9
+
+
+state 14:
+
+	tyfields : ID COLON . ID tyfieldsP 
+
+	ID	shift 15
+
+
+	.	error
+
+
+state 15:
+
+	tyfields : ID COLON ID . tyfieldsP 
+
+	COMMA	shift 17
+
+	tyfieldsP	goto 16
+
+	.	reduce by rule 13
+
+
+state 16:
+
+	tyfields : ID COLON ID tyfieldsP .  (reduce by rule 12)
+
+
+
+	.	reduce by rule 12
+
+
+state 17:
+
+	tyfieldsP : COMMA . ID COLON ID tyfieldsP 
+
+	ID	shift 18
+
+
+	.	error
+
+
+state 18:
+
+	tyfieldsP : COMMA ID . COLON ID tyfieldsP 
+
+	COLON	shift 19
+
+
+	.	error
+
+
+state 19:
+
+	tyfieldsP : COMMA ID COLON . ID tyfieldsP 
+
+	ID	shift 20
+
+
+	.	error
+
+
+state 20:
+
+	tyfieldsP : COMMA ID COLON ID . tyfieldsP 
+
+	COMMA	shift 17
+
+	tyfieldsP	goto 21
+
+	.	reduce by rule 13
+
+
+state 21:
+
+	tyfieldsP : COMMA ID COLON ID tyfieldsP .  (reduce by rule 14)
+
+
+
+	.	reduce by rule 14
+
+
+state 22:
+
 
 	EOF	accept
 
 
 	.	error
 
-1 of 4 action table entries left after compaction
-2 goto table entries
+17 of 41 action table entries left after compaction
+6 goto table entries
