@@ -14,7 +14,7 @@
 
 %nonterm  exp | program | decs | dec | tydec | vardec | fundec | ty | tyfields | tyfieldsP | lvalue | unit | negation
   | comparison | arithmetic | boolcomp | expP | record | recP | array | assignment | ifThenElse
-  | ifThen | let | expseq | args | while | forloop | lval
+  | ifThen | let | expseq | args | while | forloop | lval | sequence | funCall
 
 %pos int
 %verbose
@@ -46,15 +46,12 @@
 
 %%
 
-(* This is a skeleton grammar file, meant to illustrate what kind of
- * declarations are necessary above the %% mark.  Students are expected
- *  to replace the two dummy productions below with an actual grammar. 
- *)
+(* Grammar definition *)
 
 program	: exp ()
 
 exp: NIL () 
-  | LPAREN expP RPAREN ()
+  | sequence ()
   | lvalue ()
   | INT ()
   | STRING ()
@@ -71,7 +68,7 @@ exp: NIL ()
   | forloop ()
   | BREAK ()
   | unit ()
-  | ID LPAREN args RPAREN ()
+  | funCall ()
   | let ()
 
 expP: exp SEMICOLON expP ()
@@ -79,6 +76,8 @@ expP: exp SEMICOLON expP ()
 
 expseq: expP () 
   | ()
+
+sequence: LPAREN expP RPAREN ()
 
 args: exp COMMA args ()
   | exp ()
@@ -142,6 +141,8 @@ lval: ID DOT ID ()
   | lval DOT ID ()
   | ID LBRACK exp RBRACK ()
   | lval LBRACK exp RBRACK ()
+
+funCall: ID LPAREN args RPAREN ()
 
 assignment: lvalue ASSIGN exp ()
 
