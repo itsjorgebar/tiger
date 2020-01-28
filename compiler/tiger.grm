@@ -26,6 +26,7 @@
 %nonassoc ELSEPRE
 %nonassoc ELSE
 %nonassoc ASSIGN
+%left OF DO
 %left AND OR
 %nonassoc EQ NEQ GT LT LE GE
 %left PLUS MINUS
@@ -58,9 +59,9 @@ exp: NIL ()
   | INT ()
   | STRING ()
   | negation ()
-  (* | arithmetic ()
+  | arithmetic ()
   | comparison ()
-  | boolcomp () *)
+  | boolcomp ()
   | record ()
   | array ()
   | assignment ()
