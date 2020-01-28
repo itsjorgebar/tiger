@@ -74,8 +74,8 @@ exp: NIL (A.NilExp)
   | funCall (funCall)
   | let (let)
 
-expP: exp SEMICOLON expP (A.SeqExp(exp::expP))
-  | exp ([exp])
+expP: exp SEMICOLON expP (A.SeqExp((exp, expleft)::expP))
+  | exp ([(exp, expleft)])
 
 expseq: expP (expP) 
   | (A.NilExp)
@@ -105,7 +105,7 @@ negation: MINUS exp (A.OpExp(0,A.MinusOp,exp,MINUSleft))
 
 unit: LPAREN RPAREN (A.NilExp)
 
-record: ID LBRACE ID EQ exp recP RBRACE (A.RecordExp((Symbol.symbol(ID), exp, IDleft)::recP))
+record: ID LBRACE ID EQ exp recP RBRACE (A.RecordExp((Symbol.symbol(ID1), exp, ID1left)::recP, Symbol.symbol(ID2)))
 
 recP: COMMA ID EQ exp recP ((Symbol.symbol(ID), exp, IDleft)::recP) 
   | ([])
@@ -132,7 +132,7 @@ ty: ID (A.NameTy(Symbol.symbol(ID), IDleft))
   | ARRAY OF ID (A.NameTy(Symbol.symbol(ID), ARRAYleft))
 
 tyfields: ([])
-  | ID COLON ID tyfieldsP ((Symbol.symbol(ID1), ref true, Symbol.symbol(ID2), COMMAleft)::tyfieldsP)
+  | ID COLON ID tyfieldsP ((Symbol.symbol(ID1), ref true, Symbol.symbol(ID2), COLONleft)::tyfieldsP)
 
 tyfieldsP: ([]) 
   | COMMA ID  COLON ID tyfieldsP ((Symbol.symbol(ID1), ref true, Symbol.symbol(ID2), COMMAleft)::tyfieldsP)
@@ -149,7 +149,7 @@ lvalue: ID (A.SimpleVar(Symbol.symbol(ID), IDleft))
 lval: ID DOT ID (A.FieldVar(Symbol.symbol(ID1), Symbol.symbol(ID2), ID1left))
   | lval DOT ID (A.FieldVar(lval, Symbol.symbol(ID), DOTleft))
   | ID LBRACK exp RBRACK (A.SubscriptVar(Symbol.symbol(ID), exp, IDleft))
-  | lval LBRACK exp RBRACK (A.SubscriptVar(lval, exp, IDleft))
+  | lval LBRACK exp RBRACK (A.SubscriptVar(lval, exp, LBRACKleft))
 
 funCall: ID LPAREN args RPAREN (A.CallExp(Symbol.symbol(ID), args, IDleft))
 

@@ -908,17 +908,18 @@ end; ()))
  in ( LrTable.NT 0, ( result, let1left, let1right), rest671)
 end
 |  ( 21, ( ( _, ( MlyValue.ntVOID expP1, _, expP1right)) :: _ :: ( _, 
-( MlyValue.ntVOID exp1, exp1left, _)) :: rest671)) => let val  result
- = MlyValue.ntVOID (fn _ => ( let val  (exp as exp1) = exp1 ()
+( MlyValue.ntVOID exp1, (expleft as exp1left), _)) :: rest671)) => let
+ val  result = MlyValue.ntVOID (fn _ => ( let val  (exp as exp1) = 
+exp1 ()
  val  (expP as expP1) = expP1 ()
- in (A.SeqExp(exp::expP))
+ in (A.SeqExp((exp, expleft)::expP))
 end; ()))
  in ( LrTable.NT 18, ( result, exp1left, expP1right), rest671)
 end
-|  ( 22, ( ( _, ( MlyValue.ntVOID exp1, exp1left, exp1right)) :: 
-rest671)) => let val  result = MlyValue.ntVOID (fn _ => ( let val  (
-exp as exp1) = exp1 ()
- in ([exp])
+|  ( 22, ( ( _, ( MlyValue.ntVOID exp1, (expleft as exp1left), 
+exp1right)) :: rest671)) => let val  result = MlyValue.ntVOID (fn _ =>
+ ( let val  (exp as exp1) = exp1 ()
+ in ([(exp, expleft)])
 end; ()))
  in ( LrTable.NT 18, ( result, exp1left, exp1right), rest671)
 end
@@ -1083,13 +1084,15 @@ end
 end
 |  ( 43, ( ( _, ( _, _, RBRACE1right)) :: ( _, ( MlyValue.ntVOID recP1
 , _, _)) :: ( _, ( MlyValue.ntVOID exp1, _, _)) :: _ :: ( _, ( 
-MlyValue.ID ID2, _, _)) :: _ :: ( _, ( MlyValue.ID ID1, (IDleft as 
-ID1left), _)) :: rest671)) => let val  result = MlyValue.ntVOID (fn _
- => ( let val  (ID as ID1) = ID1 ()
+MlyValue.ID ID2, _, _)) :: _ :: ( _, ( MlyValue.ID ID1, ID1left, _))
+ :: rest671)) => let val  result = MlyValue.ntVOID (fn _ => ( let val 
+ ID1 = ID1 ()
  val  ID2 = ID2 ()
  val  (exp as exp1) = exp1 ()
  val  (recP as recP1) = recP1 ()
- in (A.RecordExp((Symbol.symbol(ID), exp, IDleft)::recP))
+ in (
+A.RecordExp((Symbol.symbol(ID1), exp, ID1left)::recP, Symbol.symbol(ID2))
+)
 end; ()))
  in ( LrTable.NT 19, ( result, ID1left, RBRACE1right), rest671)
 end
@@ -1223,13 +1226,13 @@ end
  in ( LrTable.NT 10, ( result, defaultPos, defaultPos), rest671)
 end
 |  ( 61, ( ( _, ( MlyValue.ntVOID tyfieldsP1, _, tyfieldsP1right)) :: 
-( _, ( MlyValue.ID ID2, _, _)) :: _ :: ( _, ( MlyValue.ID ID1, ID1left
-, _)) :: rest671)) => let val  result = MlyValue.ntVOID (fn _ => ( let
- val  ID1 = ID1 ()
+( _, ( MlyValue.ID ID2, _, _)) :: ( _, ( _, COLONleft, _)) :: ( _, ( 
+MlyValue.ID ID1, ID1left, _)) :: rest671)) => let val  result = 
+MlyValue.ntVOID (fn _ => ( let val  ID1 = ID1 ()
  val  ID2 = ID2 ()
  val  (tyfieldsP as tyfieldsP1) = tyfieldsP1 ()
  in (
-(Symbol.symbol(ID1), ref true, Symbol.symbol(ID2), COMMAleft)::tyfieldsP
+(Symbol.symbol(ID1), ref true, Symbol.symbol(ID2), COLONleft)::tyfieldsP
 )
 end; ()))
  in ( LrTable.NT 10, ( result, ID1left, tyfieldsP1right), rest671)
@@ -1339,11 +1342,11 @@ end; ()))
  in ( LrTable.NT 30, ( result, ID1left, RBRACK1right), rest671)
 end
 |  ( 73, ( ( _, ( _, _, RBRACK1right)) :: ( _, ( MlyValue.ntVOID exp1,
- _, _)) :: _ :: ( _, ( MlyValue.ntVOID lval1, lval1left, _)) :: 
-rest671)) => let val  result = MlyValue.ntVOID (fn _ => ( let val  (
-lval as lval1) = lval1 ()
+ _, _)) :: ( _, ( _, LBRACKleft, _)) :: ( _, ( MlyValue.ntVOID lval1, 
+lval1left, _)) :: rest671)) => let val  result = MlyValue.ntVOID (fn _
+ => ( let val  (lval as lval1) = lval1 ()
  val  (exp as exp1) = exp1 ()
- in (A.SubscriptVar(lval, exp, IDleft))
+ in (A.SubscriptVar(lval, exp, LBRACKleft))
 end; ()))
  in ( LrTable.NT 30, ( result, lval1left, RBRACK1right), rest671)
 end
