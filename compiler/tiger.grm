@@ -1,3 +1,4 @@
+structure A =  Absyn
 %%
 %term
     EOF 
@@ -10,9 +11,9 @@
   | ARRAY | IF | THEN | ELSE | WHILE | FOR | TO | DO | LET | IN | END | OF 
   | BREAK | NIL
   | FUNCTION | VAR | TYPE 
-  | UMINUS | ELSEPRE
+  | UMINUS | ELSEPRE | NONMUTREC
 
-%nonterm  exp | program | decs | dec | tydec | vardec | fundec | ty | tyfields | tyfieldsP | lvalue | unit | negation
+%nonterm  exp | program of A.exp | decs | dec | tydec | tydecs | vardec | fundec | fundecs| ty | tyfields | tyfieldsP | lvalue | unit | negation
   | comparison | arithmetic | boolcomp | expP | record | recP | array | assignment | ifThenElse
   | ifThen | let | expseq | args | while | forloop | lval | sequence | funCall
 
@@ -23,6 +24,8 @@
 %noshift EOF
 
 (* Precedences *)
+%left NONMUTREC
+%left FUNCTION TYPE
 %nonassoc ELSEPRE
 %nonassoc ELSE
 %nonassoc ASSIGN
@@ -48,110 +51,116 @@
 
 (* Grammar definition *)
 
-program	: exp ()
+program	: exp (exp)
 
-exp: NIL () 
-  | sequence ()
-  | lvalue ()
-  | INT ()
-  | STRING ()
-  | negation ()
-  | arithmetic ()
-  | comparison ()
-  | boolcomp ()
-  | record ()
-  | array ()
-  | assignment ()
-  | ifThenElse ()
-  | ifThen ()
-  | while ()
-  | forloop ()
-  | BREAK ()
-  | unit ()
-  | funCall ()
-  | let ()
+exp: NIL (A.NilExp) 
+  | sequence (sequence)
+  | lvalue (lvalue)
+  | INT (A.IntExp(INT))
+  | STRING (A.StringExp(STRING,STRINGleft))
+  | negation (negation)
+  | arithmetic (arithmetic)
+  | comparison (comparison)
+  | boolcomp (boolcomp)
+  | record (record)
+  | array (array)
+  | assignment (assignment)
+  | ifThenElse (ifThenElse)
+  | ifThen (ifThen)
+  | while (while)
+  | forloop (forloop)
+  | BREAK (A.BreakExp(BREAKleft))
+  | unit (unit)
+  | funCall (funCall)
+  | let (let)
 
-expP: exp SEMICOLON expP ()
-  | exp ()
+expP: exp SEMICOLON expP (A.SeqExp(exp::expP))
+  | exp ([exp])
 
-expseq: expP () 
-  | ()
+expseq: expP (expP) 
+  | (A.NilExp)
 
-sequence: LPAREN expP RPAREN ()
+sequence: LPAREN expP RPAREN (expP)
 
-args: exp COMMA args ()
-  | exp ()
-  | ()
+args: exp COMMA args (exp::args)  
+  | exp ([exp])
+  | ([])
 
-arithmetic: exp PLUS exp ()
-  | exp MINUS exp ()
-  | exp TIMES exp ()
-  | exp DIVIDE exp ()
+arithmetic: exp PLUS exp (A.OpExp(exp1, A.PlusOp, exp2, PLUSleft))
+  | exp MINUS exp (A.OpExp(exp1, A.MinusOp, exp2, MINUSleft))
+  | exp TIMES exp (A.OpExp(exp1, A.TimesOp, exp2, TIMESleft))
+  | exp DIVIDE exp (A.OpExp(exp1, A.DivideOp, exp2, DIVIDEleft))
 
-comparison: exp EQ exp ()
-  | exp NEQ exp ()
-  | exp LT exp ()
-  | exp LE exp ()
-  | exp GT exp ()
-  | exp GE exp ()
+comparison: exp EQ exp (A.OpExp(exp1, A.EqOp, exp2, EQleft))
+  | exp NEQ exp (A.OpExp(exp1, A.NeqOp, exp2, NEQleft))
+  | exp LT exp (A.OpExp(exp1, A.LtOp, exp2, LTleft))
+  | exp LE exp (A.OpExp(exp1, A.LeusOp, exp2, LEleft))
+  | exp GT exp (A.OpExp(exp1, A.GtOp, exp2, GTleft))
+  | exp GE exp (A.OpExp(exp1, A.GeOp, exp2, GEleft))
 
-boolcomp: exp AND exp ()
-  | exp OR exp ()
+boolcomp: exp AND exp (A.IfExp(exp1, exp2, 0, ANDleft))
+  | exp OR exp (A.IfExp(exp1, 1, exp2, ORleft))
 
-negation: MINUS exp ()
+negation: MINUS exp (A.OpExp(0,A.MinusOp,exp,MINUSleft))
 
-unit: LPAREN RPAREN ()
+unit: LPAREN RPAREN (A.NilExp)
 
-record: ID LBRACE ID EQ exp recP RBRACE ()
+record: ID LBRACE ID EQ exp recP RBRACE (A.RecordExp((Symbol.symbol(ID), exp, IDleft)::recP))
 
-recP: COMMA ID EQ exp recP () 
-  | ()
+recP: COMMA ID EQ exp recP ((Symbol.symbol(ID), exp, IDleft)::recP) 
+  | ([])
 
-array: ID LBRACK exp RBRACK OF exp ()
+array: ID LBRACK exp RBRACK OF exp (A.ArrayExp(Symbol.symbol(ID), exp1, exp2, IDleft))
 
-decs: dec decs ()
-  | dec ()
+decs: dec decs (dec::decs)
+  | dec ([dec])
 
-dec: tydec ()
-  | vardec ()
-  | fundec ()
+dec: tydecs (A.TypeDec(tydecs))
+  | vardec (vardec)
+  | fundecs (A.FunctionDec(fundecs))
 
-tydec: TYPE ID EQ ty ()
+tydecs: tydec tydecs (tydec::tydecs)
+  | tydec %prec NONMUTREC ([tydec])
 
-ty: ID ()
-  | LBRACE tyfields RBRACE ()
-  | ARRAY OF ID ()
+fundecs: fundec fundecs (fundec::fundecs)
+  | fundec %prec NONMUTREC ([fundec])
 
-tyfields: ()
-  | ID COLON ID tyfieldsP ()
+tydec: TYPE ID EQ ty ((Symbol.symbol(ID), ty, TYPEleft))
 
-tyfieldsP: () 
-  | COMMA ID  COLON ID tyfieldsP ()
+ty: ID (A.NameTy(Symbol.symbol(ID), IDleft))
+  | LBRACE tyfields RBRACE (tyfields)
+  | ARRAY OF ID (A.NameTy(Symbol.symbol(ID), ARRAYleft))
 
-vardec: VAR ID ASSIGN exp ()
-  | VAR ID COLON ID ASSIGN exp ()
+tyfields: ([])
+  | ID COLON ID tyfieldsP ((Symbol.symbol(ID1), ref true, Symbol.symbol(ID2), COMMAleft)::tyfieldsP)
 
-fundec: FUNCTION ID LPAREN tyfields RPAREN EQ exp ()
-  | FUNCTION ID LPAREN tyfields RPAREN COLON ID EQ exp ()
+tyfieldsP: ([]) 
+  | COMMA ID  COLON ID tyfieldsP ((Symbol.symbol(ID1), ref true, Symbol.symbol(ID2), COMMAleft)::tyfieldsP)
 
-lvalue: ID () 
-  | lval ()
+vardec: VAR ID ASSIGN exp (A.VarDec(Symbol.symbol(ID), ref true, exp, VARleft))
+  | VAR ID COLON ID ASSIGN exp (A.VarDec(Symbol.symbol(ID1), ref true, (Symbol.symbol(ID2), ID2left), exp, VARleft))
 
-lval: ID DOT ID ()
-  | lval DOT ID ()
-  | ID LBRACK exp RBRACK ()
-  | lval LBRACK exp RBRACK ()
+fundec: FUNCTION ID LPAREN tyfields RPAREN EQ exp ((Symbol.symbol(ID), tyfields, NONE, exp, FUNCTIONleft))
+  | FUNCTION ID LPAREN tyfields RPAREN COLON ID EQ exp ((Symbol.symbol(ID1), tyfields, (Symbol.symbol(ID2), ID2left), exp, FUNCTIONleft))
 
-funCall: ID LPAREN args RPAREN ()
+lvalue: ID (A.SimpleVar(Symbol.symbol(ID), IDleft)) 
+  | lval (lval)
 
-assignment: lvalue ASSIGN exp ()
+lval: ID DOT ID (A.FieldVar(Symbol.symbol(ID1), Symbol.symbol(ID2), ID1left))
+  | lval DOT ID (A.FieldVar(lval, Symbol.symbol(ID), DOTleft))
+  | ID LBRACK exp RBRACK (A.SubscriptVar(Symbol.symbol(ID), exp, IDleft))
+  | lval LBRACK exp RBRACK (A.SubscriptVar(lval, exp, IDleft))
 
-ifThenElse: IF exp THEN exp ELSE exp ()
+funCall: ID LPAREN args RPAREN (A.CallExp(Symbol.symbol(ID), args, IDleft))
 
-ifThen: IF exp THEN exp %prec ELSEPRE ()
+assignment: lvalue ASSIGN exp (A.AssignExp(lvalue, exp, ASSIGNleft))
 
-while: WHILE exp DO exp ()
+ifThenElse: IF exp THEN exp ELSE exp (A.IfExp(exp1, exp2, exp3, IFleft))
 
-forloop: FOR ID ASSIGN exp TO exp DO exp ()
+ifThen: IF exp THEN exp %prec ELSEPRE (A.IfExp(exp1, exp2, NONE, IFleft))
 
-let: LET decs IN expseq END ()
+while: WHILE exp DO exp (A.WhileExp(exp1, exp2, WHILEleft))
+
+forloop: FOR ID ASSIGN exp TO exp DO exp (A.ForExp(Symbol.symbol(ID), ref true, exp1, exp2, exp3, FORleft))
+
+let: LET decs IN expseq END (A.LetExp(decs, expseq, LETleft))
