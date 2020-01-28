@@ -15,7 +15,7 @@ structure A =  Absyn
 
 %nonterm  exp | program of A.exp | decs | dec | tydec | tydecs | vardec | fundec | fundecs| ty | tyfields | tyfieldsP | lvalue | unit | negation
   | comparison | arithmetic | boolcomp | expP | record | recP | array | assignment | ifThenElse
-  | ifThen | letloop | expseq | args | whileloop | forloop | lval | sequence | funCall
+  | ifThen | letdecl | expseq | args | whileloop | forloop | lval | sequence | funCall
 
 %pos int
 %verbose
@@ -72,7 +72,7 @@ exp: NIL (A.NilExp)
   | BREAK (A.BreakExp(BREAKleft))
   | unit (unit)
   | funCall (funCall)
-  | letloop (letloop)
+  | letdecl (letdecl)
 
 expP: exp SEMICOLON expP (A.SeqExp((exp, expleft)::expP))
   | exp ([(exp, expleft)])
@@ -163,4 +163,4 @@ whileloop: WHILE exp DO exp (A.WhileExp(exp1, exp2, WHILEleft))
 
 forloop: FOR ID ASSIGN exp TO exp DO exp (A.ForExp(Symbol.symbol(ID), ref true, exp1, exp2, exp3, FORleft))
 
-letloop: LET decs IN expseq END (A.LetExp(decs, expseq, LETleft))
+letdecl: LET decs IN expseq END (A.LetExp(decs, expseq, LETleft))

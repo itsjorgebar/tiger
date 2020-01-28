@@ -28,7 +28,7 @@ state 0:
 	assignment	goto 9
 	ifThenElse	goto 8
 	ifThen	goto 7
-	letloop	goto 6
+	letdecl	goto 6
 	whileloop	goto 5
 	forloop	goto 4
 	lval	goto 3
@@ -89,7 +89,7 @@ state 5:
 
 state 6:
 
-	exp : letloop .  (reduce by rule 20)
+	exp : letdecl .  (reduce by rule 20)
 
 
 
@@ -250,7 +250,7 @@ state 20:
 
 state 21:
 
-	letloop : LET . decs IN expseq END 
+	letdecl : LET . decs IN expseq END 
 
 	FUNCTION	shift 54
 	VAR	shift 53
@@ -305,7 +305,7 @@ state 23:
 	assignment	goto 9
 	ifThenElse	goto 8
 	ifThen	goto 7
-	letloop	goto 6
+	letdecl	goto 6
 	whileloop	goto 5
 	forloop	goto 4
 	lval	goto 3
@@ -344,7 +344,7 @@ state 24:
 	assignment	goto 9
 	ifThenElse	goto 8
 	ifThen	goto 7
-	letloop	goto 6
+	letdecl	goto 6
 	whileloop	goto 5
 	forloop	goto 4
 	lval	goto 3
@@ -382,7 +382,7 @@ state 25:
 	assignment	goto 9
 	ifThenElse	goto 8
 	ifThen	goto 7
-	letloop	goto 6
+	letdecl	goto 6
 	whileloop	goto 5
 	forloop	goto 4
 	lval	goto 3
@@ -423,7 +423,7 @@ state 26:
 	assignment	goto 9
 	ifThenElse	goto 8
 	ifThen	goto 7
-	letloop	goto 6
+	letdecl	goto 6
 	whileloop	goto 5
 	forloop	goto 4
 	lval	goto 3
@@ -507,7 +507,7 @@ state 31:
 	assignment	goto 9
 	ifThenElse	goto 8
 	ifThen	goto 7
-	letloop	goto 6
+	letdecl	goto 6
 	whileloop	goto 5
 	forloop	goto 4
 	lval	goto 3
@@ -545,7 +545,7 @@ state 32:
 	assignment	goto 9
 	ifThenElse	goto 8
 	ifThen	goto 7
-	letloop	goto 6
+	letdecl	goto 6
 	whileloop	goto 5
 	forloop	goto 4
 	lval	goto 3
@@ -583,7 +583,7 @@ state 33:
 	assignment	goto 9
 	ifThenElse	goto 8
 	ifThen	goto 7
-	letloop	goto 6
+	letdecl	goto 6
 	whileloop	goto 5
 	forloop	goto 4
 	lval	goto 3
@@ -621,7 +621,7 @@ state 34:
 	assignment	goto 9
 	ifThenElse	goto 8
 	ifThen	goto 7
-	letloop	goto 6
+	letdecl	goto 6
 	whileloop	goto 5
 	forloop	goto 4
 	lval	goto 3
@@ -659,7 +659,7 @@ state 35:
 	assignment	goto 9
 	ifThenElse	goto 8
 	ifThen	goto 7
-	letloop	goto 6
+	letdecl	goto 6
 	whileloop	goto 5
 	forloop	goto 4
 	lval	goto 3
@@ -697,7 +697,7 @@ state 36:
 	assignment	goto 9
 	ifThenElse	goto 8
 	ifThen	goto 7
-	letloop	goto 6
+	letdecl	goto 6
 	whileloop	goto 5
 	forloop	goto 4
 	lval	goto 3
@@ -735,7 +735,7 @@ state 37:
 	assignment	goto 9
 	ifThenElse	goto 8
 	ifThen	goto 7
-	letloop	goto 6
+	letdecl	goto 6
 	whileloop	goto 5
 	forloop	goto 4
 	lval	goto 3
@@ -773,7 +773,7 @@ state 38:
 	assignment	goto 9
 	ifThenElse	goto 8
 	ifThen	goto 7
-	letloop	goto 6
+	letdecl	goto 6
 	whileloop	goto 5
 	forloop	goto 4
 	lval	goto 3
@@ -811,7 +811,7 @@ state 39:
 	assignment	goto 9
 	ifThenElse	goto 8
 	ifThen	goto 7
-	letloop	goto 6
+	letdecl	goto 6
 	whileloop	goto 5
 	forloop	goto 4
 	lval	goto 3
@@ -849,7 +849,7 @@ state 40:
 	assignment	goto 9
 	ifThenElse	goto 8
 	ifThen	goto 7
-	letloop	goto 6
+	letdecl	goto 6
 	whileloop	goto 5
 	forloop	goto 4
 	lval	goto 3
@@ -887,7 +887,7 @@ state 41:
 	assignment	goto 9
 	ifThenElse	goto 8
 	ifThen	goto 7
-	letloop	goto 6
+	letdecl	goto 6
 	whileloop	goto 5
 	forloop	goto 4
 	lval	goto 3
@@ -925,7 +925,7 @@ state 42:
 	assignment	goto 9
 	ifThenElse	goto 8
 	ifThen	goto 7
-	letloop	goto 6
+	letdecl	goto 6
 	whileloop	goto 5
 	forloop	goto 4
 	lval	goto 3
@@ -963,7 +963,7 @@ state 43:
 	assignment	goto 9
 	ifThenElse	goto 8
 	ifThen	goto 7
-	letloop	goto 6
+	letdecl	goto 6
 	whileloop	goto 5
 	forloop	goto 4
 	lval	goto 3
@@ -1001,7 +1001,7 @@ state 44:
 	assignment	goto 9
 	ifThenElse	goto 8
 	ifThen	goto 7
-	letloop	goto 6
+	letdecl	goto 6
 	whileloop	goto 5
 	forloop	goto 4
 	lval	goto 3
@@ -1086,7 +1086,7 @@ state 50:
 
 state 51:
 
-	letloop : LET decs . IN expseq END 
+	letdecl : LET decs . IN expseq END 
 
 	IN	shift 84
 
@@ -1331,7 +1331,7 @@ state 64:
 	assignment	goto 9
 	ifThenElse	goto 8
 	ifThen	goto 7
-	letloop	goto 6
+	letdecl	goto 6
 	whileloop	goto 5
 	forloop	goto 4
 	lval	goto 3
@@ -1369,7 +1369,7 @@ state 65:
 	assignment	goto 9
 	ifThenElse	goto 8
 	ifThen	goto 7
-	letloop	goto 6
+	letdecl	goto 6
 	args	goto 96
 	whileloop	goto 5
 	forloop	goto 4
@@ -1887,7 +1887,7 @@ state 83:
 
 state 84:
 
-	letloop : LET decs IN . expseq END 
+	letdecl : LET decs IN . expseq END 
 
 	ID	shift 29
 	INT	shift 28
@@ -1914,7 +1914,7 @@ state 84:
 	assignment	goto 9
 	ifThenElse	goto 8
 	ifThen	goto 7
-	letloop	goto 6
+	letdecl	goto 6
 	expseq	goto 99
 	whileloop	goto 5
 	forloop	goto 4
@@ -1986,7 +1986,7 @@ state 88:
 	assignment	goto 9
 	ifThenElse	goto 8
 	ifThen	goto 7
-	letloop	goto 6
+	letdecl	goto 6
 	whileloop	goto 5
 	forloop	goto 4
 	lval	goto 3
@@ -2024,7 +2024,7 @@ state 89:
 	assignment	goto 9
 	ifThenElse	goto 8
 	ifThen	goto 7
-	letloop	goto 6
+	letdecl	goto 6
 	whileloop	goto 5
 	forloop	goto 4
 	lval	goto 3
@@ -2063,7 +2063,7 @@ state 90:
 	assignment	goto 9
 	ifThenElse	goto 8
 	ifThen	goto 7
-	letloop	goto 6
+	letdecl	goto 6
 	whileloop	goto 5
 	forloop	goto 4
 	lval	goto 3
@@ -2111,7 +2111,7 @@ state 92:
 	assignment	goto 9
 	ifThenElse	goto 8
 	ifThen	goto 7
-	letloop	goto 6
+	letdecl	goto 6
 	whileloop	goto 5
 	forloop	goto 4
 	lval	goto 3
@@ -2231,7 +2231,7 @@ state 98:
 
 state 99:
 
-	letloop : LET decs IN expseq . END 
+	letdecl : LET decs IN expseq . END 
 
 	END	shift 113
 
@@ -2289,7 +2289,7 @@ state 102:
 	assignment	goto 9
 	ifThenElse	goto 8
 	ifThen	goto 7
-	letloop	goto 6
+	letdecl	goto 6
 	whileloop	goto 5
 	forloop	goto 4
 	lval	goto 3
@@ -2460,7 +2460,7 @@ state 109:
 	assignment	goto 9
 	ifThenElse	goto 8
 	ifThen	goto 7
-	letloop	goto 6
+	letdecl	goto 6
 	whileloop	goto 5
 	forloop	goto 4
 	lval	goto 3
@@ -2518,7 +2518,7 @@ state 112:
 	assignment	goto 9
 	ifThenElse	goto 8
 	ifThen	goto 7
-	letloop	goto 6
+	letdecl	goto 6
 	args	goto 126
 	whileloop	goto 5
 	forloop	goto 4
@@ -2531,7 +2531,7 @@ state 112:
 
 state 113:
 
-	letloop : LET decs IN expseq END .  (reduce by rule 80)
+	letdecl : LET decs IN expseq END .  (reduce by rule 80)
 
 
 
@@ -2669,7 +2669,7 @@ state 122:
 	assignment	goto 9
 	ifThenElse	goto 8
 	ifThen	goto 7
-	letloop	goto 6
+	letdecl	goto 6
 	whileloop	goto 5
 	forloop	goto 4
 	lval	goto 3
@@ -2707,7 +2707,7 @@ state 123:
 	assignment	goto 9
 	ifThenElse	goto 8
 	ifThen	goto 7
-	letloop	goto 6
+	letdecl	goto 6
 	whileloop	goto 5
 	forloop	goto 4
 	lval	goto 3
@@ -2780,7 +2780,7 @@ state 125:
 	assignment	goto 9
 	ifThenElse	goto 8
 	ifThen	goto 7
-	letloop	goto 6
+	letdecl	goto 6
 	whileloop	goto 5
 	forloop	goto 4
 	lval	goto 3
@@ -2847,7 +2847,7 @@ state 129:
 	assignment	goto 9
 	ifThenElse	goto 8
 	ifThen	goto 7
-	letloop	goto 6
+	letdecl	goto 6
 	whileloop	goto 5
 	forloop	goto 4
 	lval	goto 3
@@ -3078,7 +3078,7 @@ state 140:
 	assignment	goto 9
 	ifThenElse	goto 8
 	ifThen	goto 7
-	letloop	goto 6
+	letdecl	goto 6
 	whileloop	goto 5
 	forloop	goto 4
 	lval	goto 3
@@ -3137,7 +3137,7 @@ state 143:
 	assignment	goto 9
 	ifThenElse	goto 8
 	ifThen	goto 7
-	letloop	goto 6
+	letdecl	goto 6
 	whileloop	goto 5
 	forloop	goto 4
 	lval	goto 3
@@ -3289,7 +3289,7 @@ state 151:
 	assignment	goto 9
 	ifThenElse	goto 8
 	ifThen	goto 7
-	letloop	goto 6
+	letdecl	goto 6
 	whileloop	goto 5
 	forloop	goto 4
 	lval	goto 3
@@ -3327,7 +3327,7 @@ state 152:
 	assignment	goto 9
 	ifThenElse	goto 8
 	ifThen	goto 7
-	letloop	goto 6
+	letdecl	goto 6
 	whileloop	goto 5
 	forloop	goto 4
 	lval	goto 3

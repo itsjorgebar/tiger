@@ -901,12 +901,12 @@ end; ()))
  in ( LrTable.NT 0, ( result, funCall1left, funCall1right), rest671)
 
 end
-|  ( 20, ( ( _, ( MlyValue.ntVOID letloop1, letloop1left, 
-letloop1right)) :: rest671)) => let val  result = MlyValue.ntVOID (fn
- _ => ( let val  (letloop as letloop1) = letloop1 ()
- in (letloop)
+|  ( 20, ( ( _, ( MlyValue.ntVOID letdecl1, letdecl1left, 
+letdecl1right)) :: rest671)) => let val  result = MlyValue.ntVOID (fn
+ _ => ( let val  (letdecl as letdecl1) = letdecl1 ()
+ in (letdecl)
 end; ()))
- in ( LrTable.NT 0, ( result, letloop1left, letloop1right), rest671)
+ in ( LrTable.NT 0, ( result, letdecl1left, letdecl1right), rest671)
 
 end
 |  ( 21, ( ( _, ( MlyValue.ntVOID expP1, _, expP1right)) :: _ :: ( _, 
