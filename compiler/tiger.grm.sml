@@ -865,12 +865,13 @@ end
 end; ()))
  in ( LrTable.NT 0, ( result, ifThen1left, ifThen1right), rest671)
 end
-|  ( 15, ( ( _, ( MlyValue.ntVOID while1, while1left, while1right)) ::
- rest671)) => let val  result = MlyValue.ntVOID (fn _ => ( let val  (
-while as while1) = while1 ()
- in (while)
+|  ( 15, ( ( _, ( MlyValue.ntVOID whileloop1, whileloop1left, 
+whileloop1right)) :: rest671)) => let val  result = MlyValue.ntVOID
+ (fn _ => ( let val  (whileloop as whileloop1) = whileloop1 ()
+ in (whileloop)
 end; ()))
- in ( LrTable.NT 0, ( result, while1left, while1right), rest671)
+ in ( LrTable.NT 0, ( result, whileloop1left, whileloop1right), 
+rest671)
 end
 |  ( 16, ( ( _, ( MlyValue.ntVOID forloop1, forloop1left, 
 forloop1right)) :: rest671)) => let val  result = MlyValue.ntVOID (fn
@@ -900,12 +901,13 @@ end; ()))
  in ( LrTable.NT 0, ( result, funCall1left, funCall1right), rest671)
 
 end
-|  ( 20, ( ( _, ( MlyValue.ntVOID let1, let1left, let1right)) :: 
-rest671)) => let val  result = MlyValue.ntVOID (fn _ => ( let val  (
-let as let1) = let1 ()
- in (let)
+|  ( 20, ( ( _, ( MlyValue.ntVOID letloop1, letloop1left, 
+letloop1right)) :: rest671)) => let val  result = MlyValue.ntVOID (fn
+ _ => ( let val  (letloop as letloop1) = letloop1 ()
+ in (letloop)
 end; ()))
- in ( LrTable.NT 0, ( result, let1left, let1right), rest671)
+ in ( LrTable.NT 0, ( result, letloop1left, letloop1right), rest671)
+
 end
 |  ( 21, ( ( _, ( MlyValue.ntVOID expP1, _, expP1right)) :: _ :: ( _, 
 ( MlyValue.ntVOID exp1, (expleft as exp1left), _)) :: rest671)) => let
@@ -1029,7 +1031,7 @@ LEleft, _)) :: ( _, ( MlyValue.ntVOID exp1, exp1left, _)) :: rest671))
  => let val  result = MlyValue.ntVOID (fn _ => ( let val  exp1 = exp1
  ()
  val  exp2 = exp2 ()
- in (A.OpExp(exp1, A.LeusOp, exp2, LEleft))
+ in (A.OpExp(exp1, A.LeOp, exp2, LEleft))
 end; ()))
  in ( LrTable.NT 15, ( result, exp1left, exp2right), rest671)
 end

@@ -15,7 +15,7 @@ structure A =  Absyn
 
 %nonterm  exp | program of A.exp | decs | dec | tydec | tydecs | vardec | fundec | fundecs| ty | tyfields | tyfieldsP | lvalue | unit | negation
   | comparison | arithmetic | boolcomp | expP | record | recP | array | assignment | ifThenElse
-  | ifThen | let | expseq | args | while | forloop | lval | sequence | funCall
+  | ifThen | letloop | expseq | args | whileloop | forloop | lval | sequence | funCall
 
 %pos int
 %verbose
@@ -67,12 +67,12 @@ exp: NIL (A.NilExp)
   | assignment (assignment)
   | ifThenElse (ifThenElse)
   | ifThen (ifThen)
-  | while (while)
+  | whileloop (whileloop)
   | forloop (forloop)
   | BREAK (A.BreakExp(BREAKleft))
   | unit (unit)
   | funCall (funCall)
-  | let (let)
+  | letloop (letloop)
 
 expP: exp SEMICOLON expP (A.SeqExp((exp, expleft)::expP))
   | exp ([(exp, expleft)])
@@ -94,7 +94,7 @@ arithmetic: exp PLUS exp (A.OpExp(exp1, A.PlusOp, exp2, PLUSleft))
 comparison: exp EQ exp (A.OpExp(exp1, A.EqOp, exp2, EQleft))
   | exp NEQ exp (A.OpExp(exp1, A.NeqOp, exp2, NEQleft))
   | exp LT exp (A.OpExp(exp1, A.LtOp, exp2, LTleft))
-  | exp LE exp (A.OpExp(exp1, A.LeusOp, exp2, LEleft))
+  | exp LE exp (A.OpExp(exp1, A.LeOp, exp2, LEleft))
   | exp GT exp (A.OpExp(exp1, A.GtOp, exp2, GTleft))
   | exp GE exp (A.OpExp(exp1, A.GeOp, exp2, GEleft))
 
@@ -159,8 +159,8 @@ ifThenElse: IF exp THEN exp ELSE exp (A.IfExp(exp1, exp2, exp3, IFleft))
 
 ifThen: IF exp THEN exp %prec ELSEPRE (A.IfExp(exp1, exp2, NONE, IFleft))
 
-while: WHILE exp DO exp (A.WhileExp(exp1, exp2, WHILEleft))
+whileloop: WHILE exp DO exp (A.WhileExp(exp1, exp2, WHILEleft))
 
 forloop: FOR ID ASSIGN exp TO exp DO exp (A.ForExp(Symbol.symbol(ID), ref true, exp1, exp2, exp3, FORleft))
 
-let: LET decs IN expseq END (A.LetExp(decs, expseq, LETleft))
+letloop: LET decs IN expseq END (A.LetExp(decs, expseq, LETleft))
