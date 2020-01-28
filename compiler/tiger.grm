@@ -13,7 +13,7 @@
   | UMINUS | ELSEPRE
 
 %nonterm  exp | program | decs | dec | tydec | vardec | fundec | ty | tyfields | tyfieldsP | lvalue | unit | negation
-  | bool | comp | op | comparison | arithmetic | boolcomp | expP | record | recP | array | assignment | ifThenElse
+  | comparison | arithmetic | boolcomp | expP | record | recP | array | assignment | ifThenElse
   | ifThen | let | expseq | args | while | forloop | lval
 
 %pos int
@@ -82,27 +82,22 @@ expseq: expP ()
 
 args: exp COMMA args ()
   | exp ()
+  | ()
 
-arithmetic: exp op exp ()
+arithmetic: exp PLUS exp ()
+  | exp MINUS exp ()
+  | exp TIMES exp ()
+  | exp DIVIDE exp ()
 
-comparison: exp comp exp ()
+comparison: exp EQ exp ()
+  | exp NEQ exp ()
+  | exp LT exp ()
+  | exp LE exp ()
+  | exp GT exp ()
+  | exp GE exp ()
 
-boolcomp: exp bool exp ()
-
-op: PLUS ()
-  | MINUS ()
-  | TIMES ()
-  | DIVIDE ()
-
-comp: EQ ()
-  | NEQ ()
-  | LT ()
-  | LE ()
-  | GT ()
-  | GE ()
-
-bool: AND ()
-  | OR ()
+boolcomp: exp AND exp ()
+  | exp OR exp ()
 
 negation: MINUS exp ()
 
