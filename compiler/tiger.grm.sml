@@ -675,7 +675,7 @@ datatype svalue = VOID | ntVOID of unit ->  unit
  | letdecl of unit ->  (A.exp) | ifThen of unit ->  (A.exp)
  | ifThenElse of unit ->  (A.exp) | assignment of unit ->  (A.exp)
  | array of unit ->  (A.exp)
- | recP of unit ->  ( ( A.symbol, A.exp, A.pos )  list)
+ | recP of unit ->  ( ( A.symbol * A.exp * A.pos )  list)
  | record of unit ->  (A.exp)
  | expP of unit ->  ( ( A.exp * A.pos )  list)
  | boolcomp of unit ->  (A.exp) | arithmetic of unit ->  (A.exp)

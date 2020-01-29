@@ -37,7 +37,7 @@ fun foo() = (); (* Enforces syntax highlighting in VS Code editor, reason unknow
   | boolcomp of A.exp
   | expP of (A.exp * A.pos) list
   | record of A.exp
-  | recP of (A.symbol, A.exp, A.pos) list
+  | recP of (A.symbol * A.exp * A.pos) list
   | array of A.exp
   | assignment of A.exp
   | ifThenElse of A.exp
