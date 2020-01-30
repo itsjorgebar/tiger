@@ -1124,8 +1124,7 @@ end
  val  (exp as exp1) = exp1 ()
  val  (recP as recP1) = recP1 ()
  in (
-A.RecordExp{
-  fields=(Symbol.symbol(ID1), exp, ID1left)::recP, typ=Symbol.symbol(ID2), pos=ID1left}
+A.RecordExp{fields=(Symbol.symbol(ID1), exp, ID1left)::recP, typ=Symbol.symbol(ID2), pos=ID1left}
 )
 end)
  in ( LrTable.NT 20, ( result, ID1left, RBRACE1right), rest671)

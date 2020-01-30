@@ -27,3 +27,8 @@ Run the parser:
 ```
 Parse.parse "test.tig";
 ```
+### Alternatively
+Run makefile:
+```
+sml < make.sml
+```
