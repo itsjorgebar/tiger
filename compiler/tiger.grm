@@ -180,7 +180,7 @@ fundec: FUNCTION ID LPAREN tyfields RPAREN EQ exp ({name=Symbol.symbol(ID), para
 lvalue: ID (A.SimpleVar(Symbol.symbol(ID), IDleft)) 
   | lval (lval)
 
-lvalueExp: lval (A.VarExp(lval))
+lvalueExp: lvalue (A.VarExp(lvalue))
 
 lval: ID DOT ID (A.FieldVar(A.SimpleVar(Symbol.symbol(ID1), ID1left), Symbol.symbol(ID2), ID1left))
   | lval DOT ID (A.FieldVar(lval, Symbol.symbol(ID), DOTleft))

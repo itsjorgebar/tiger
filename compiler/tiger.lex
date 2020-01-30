@@ -69,7 +69,7 @@ digit=[0-9];
 <INITIAL> "&" => (Tokens.AND(yypos, yypos+1));
 <INITIAL> "|" => (Tokens.OR(yypos, yypos+1));
 <INITIAL> ":=" => (Tokens.ASSIGN(yypos, yypos+2));
-<INITIAL> \"[^\"]*\" => (Tokens.STRING(yytext, yypos, yypos+size(yytext)));
+<INITIAL> \"[^\"]*\" => (Tokens.STRING(substring(yytext,1,size(yytext)-2), yypos, yypos+size(yytext)));
 <INITIAL> {digit}+ => (Tokens.INT(valOf(Int.fromString(yytext)), yypos, yypos+size(yytext)));
 <INITIAL> {alpha}({alpha}|{digit}|_)* => (Tokens.ID(yytext, yypos, yypos+size(yytext)));
 <INITIAL, COMMENT> "/*" => (nestlevel := !nestlevel+1; YYBEGIN COMMENT; continue());

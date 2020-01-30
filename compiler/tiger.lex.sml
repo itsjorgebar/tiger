@@ -270,7 +270,8 @@ fun yyAction41 (strm, lastMatch : yymatch) = (yystrm := strm;
 fun yyAction42 (strm, lastMatch : yymatch) = let
       val yytext = yymktext(strm)
       in
-        yystrm := strm; (Tokens.STRING(yytext, yypos, yypos+size(yytext)))
+        yystrm := strm;
+        (Tokens.STRING(substring(yytext,1,size(yytext)-2), yypos, yypos+size(yytext)))
       end
 fun yyAction43 (strm, lastMatch : yymatch) = let
       val yytext = yymktext(strm)

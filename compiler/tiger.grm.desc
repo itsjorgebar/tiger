@@ -60,43 +60,14 @@ state 2:
 state 3:
 
 	lvalue : lval .  (reduce by rule 69)
-	lvalueExp : lval .  (reduce by rule 70)
 	lval : lval . DOT ID 
 	lval : lval . LBRACK exp RBRACK 
 
-	EOF	reduce by rule 70
-	COMMA	reduce by rule 70
-	SEMICOLON	reduce by rule 70
-	RPAREN	reduce by rule 70
 	LBRACK	shift 32
-	RBRACK	reduce by rule 70
-	RBRACE	reduce by rule 70
 	DOT	shift 31
-	PLUS	reduce by rule 70
-	MINUS	reduce by rule 70
-	TIMES	reduce by rule 70
-	DIVIDE	reduce by rule 70
-	EQ	reduce by rule 70
-	NEQ	reduce by rule 70
-	LT	reduce by rule 70
-	LE	reduce by rule 70
-	GT	reduce by rule 70
-	GE	reduce by rule 70
-	AND	reduce by rule 70
-	OR	reduce by rule 70
-	ASSIGN	reduce by rule 69
-	THEN	reduce by rule 70
-	ELSE	reduce by rule 70
-	TO	reduce by rule 70
-	DO	reduce by rule 70
-	IN	reduce by rule 70
-	END	reduce by rule 70
-	FUNCTION	reduce by rule 70
-	VAR	reduce by rule 70
-	TYPE	reduce by rule 70
 
 
-	.	error
+	.	reduce by rule 69
 
 
 state 4:
@@ -227,12 +198,13 @@ state 17:
 
 state 18:
 
+	lvalueExp : lvalue .  (reduce by rule 70)
 	assignment : lvalue . ASSIGN exp 
 
 	ASSIGN	shift 33
 
 
-	.	error
+	.	reduce by rule 70
 
 
 state 19:
@@ -3536,5 +3508,5 @@ state 161:
 
 	.	error
 
-532 of 1072 action table entries left after compaction
+504 of 1044 action table entries left after compaction
 735 goto table entries
