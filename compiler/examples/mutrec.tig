@@ -1,0 +1,8 @@
+let
+    type intlist = {hd: int, tl: intlist}
+    function foo() = 1
+    type tree = {key: int, children: treelist}
+    type treelist = {hd: tree, tl: treelist}
+in
+    ()
+end
