@@ -9,6 +9,9 @@ parse.sml
 tiger.lex
 tiger.grm
 prabsyn.sml
+semant.sml
+main.sml
+env.sml
 $/basis.cm
 $/smlnj-lib.cm
 $/ml-yacc-lib.cm
