@@ -33,12 +33,18 @@ struct
   fun transExp(venv,tenv) =
     let fun trexp e = 
       case e of
-        A.OpExp{left,oper=A.PlusOp,right,pos} =>
+        A.IntExp(num) => 
+          {exp=(), ty=Types.INT}
+      | A.StringExp(num,_) => 
+          {exp=(), ty=Types.STRING}
+      | A.NilExp => 
+          {exp=(), ty=Types.NIL}
+      | A.OpExp{left,oper=_,right,pos} =>
           (checkint(trexp left, pos);
           checkint(trexp right, pos);
           {exp=(), ty=Types.INT})
-      | A.IntExp(num) => 
-          {exp=(), ty=Types.INT}
+      | A.SeqExp((exp,_)::[]) => trexp exp 
+      | A.SeqExp((exp,_)::exps) => (trexp exp; trexp(A.SeqExp(exps)))
       | _ => 
           {exp=(), ty=Types.UNIT} (*TODO: change ty*)
     in trexp
