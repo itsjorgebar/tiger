@@ -1,7 +1,7 @@
 CM.make "sources.cm";
 
 let
-    val filename = "examples/mutrec.tig"
+    val filename = "examples/test.tig"
 in
     Main.run filename
 end
