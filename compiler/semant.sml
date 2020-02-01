@@ -8,11 +8,12 @@ sig
   type tenv = Types.ty Symbol.table
   type expty = {exp: Translate.exp, ty: Types.ty}
 
+  (* Recursively type-checks an AST *)
+  val transProg: Absyn.exp -> unit
   val transVar: venv * tenv * Absyn.var -> expty
   val transExp: venv * tenv -> Absyn.exp -> expty
   val transDec: venv * tenv * Absyn.dec -> {venv: venv, tenv: tenv}
   val transTy:         tenv * Absyn.ty -> Types.ty
-  val transProg: Absyn.exp -> unit
 end
 
 structure Semant : SEMANT =
@@ -24,15 +25,13 @@ struct
   fun prettyPrint exp = PrintAbsyn.print(TextIO.stdOut, exp)
   fun transVar(venv, tenv, var) = {exp=(), ty=Types.NIL}
 
-  fun transExp(venv, tenv, exp) = {exp=(), ty=Types.NIL}
-
-  fun checkint ({exp, ty}: expty, pos: Absyn.pos): unit = 
+  fun checkint ({exp, ty}, pos) = 
     case ty of 
       Types.INT => ()
     | _ => ErrorMsg.error pos "integer required"
 
   fun transExp(venv,tenv) =
-    let fun trexp e : expty  = 
+    let fun trexp e = 
       case e of
         A.OpExp{left,oper=A.PlusOp,right,pos} =>
           (checkint(trexp left, pos);
