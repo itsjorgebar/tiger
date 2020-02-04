@@ -1,3 +1,5 @@
+structure T = Types
+
 signature ENV =
 sig
   type access
@@ -11,10 +13,45 @@ end
 structure Env: ENV =
 struct
   type access = unit (*TODO: change *)
-  type ty = Types.ty
+  type ty = T.ty
   datatype enventry = VarEntry of {ty: ty}
                     | FunEntry of {formals: ty list, result: ty}
-  val base_tenv = Symbol.empty
-  val base_venv = Symbol.empty
+
+  val base_tenv = 
+    Symbol.enter(
+      Symbol.enter(
+        Symbol.empty,
+        Symbol.symbol "int", 
+        T.INT
+      ),
+      Symbol.symbol "string",
+      T.STRING
+    )
+    
+  (* Initializes venv with standard library (sl) *)
+  fun fill_venv ([], tbl) = tbl
+    | fill_venv ((id,frmls,res)::t, tbl) =
+        fill_venv(
+          t,
+          Symbol.enter(
+            tbl,
+            Symbol.symbol id, 
+            FunEntry{formals=frmls, result=res}
+          )
+        )
+
+  val sl = [ ("print", [T.STRING], T.UNIT),
+              ("flush", [T.UNIT], T.UNIT),
+              ("getchar", [T.UNIT], T.STRING),
+              ("ord", [T.STRING], T.INT),
+              ("chr", [T.INT], T.STRING),
+              ("size", [T.STRING], T.INT),
+              ("substring", [T.STRING,T.INT, T.INT], T.STRING),
+              ("concat", [T.STRING, T.STRING], T.STRING),
+              ("not", [T.INT], T.INT),
+              ("exit", [T.INT], T.UNIT)
+            ]
+
+  val base_venv = fill_venv(sl,Symbol.empty)
 end
 
