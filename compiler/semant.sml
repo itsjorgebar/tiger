@@ -1,4 +1,5 @@
 structure A = Absyn
+struct S = Symbol
 
 structure Translate = struct type exp = unit end
 
@@ -31,26 +32,76 @@ struct
     | _ => ErrorMsg.error pos "integer required"
 
   fun transExp(venv,tenv) =
-    let fun trexp e = 
-      case e of
-        A.IntExp(num) => 
-          {exp=(), ty=Types.INT}
-      | A.StringExp(num,_) => 
-          {exp=(), ty=Types.STRING}
-      | A.NilExp => 
-          {exp=(), ty=Types.NIL}
-      | A.OpExp{left,oper=_,right,pos} =>
-          (checkint(trexp left, pos);
-          checkint(trexp right, pos);
-          {exp=(), ty=Types.INT})
-      | A.SeqExp((exp,_)::[]) => trexp exp 
-      | A.SeqExp((exp,_)::exps) => (trexp exp; trexp(A.SeqExp(exps)))
-      | _ => 
-          {exp=(), ty=Types.UNIT} (*TODO: change ty*)
+    let 
+      fun trexp e = 
+        case e of
+          A.IntExp(num) => 
+            {exp=(), ty=Types.INT}
+        | A.StringExp(num,_) => 
+            {exp=(), ty=Types.STRING}
+        | A.NilExp => 
+            {exp=(), ty=Types.NIL}
+        | A.OpExp{left,oper=_,right,pos} =>
+            (checkint(trexp left, pos);
+            checkint(trexp right, pos);
+            {exp=(), ty=Types.INT})
+        | A.SeqExp((exp,_)::[]) => trexp exp 
+        | A.SeqExp((exp,_)::exps) => (trexp exp; trexp(A.SeqExp(exps)))
+        | A.LetExp{decs,body,pos} =
+            let val {venv=venv',tenv=tenv'} =
+              transDecs(venv,tenv,decs)
+            in transExp(venv',tenv') body
+            end
+        | _ =>
+            {exp=(), ty=Types.UNIT} (*TODO: change ty*)
+      and trvar e =
+        case e of
+          A.SimpleVar(id,pos) =>
+            (case 
+              Symbol.look(venv,id) of SOME(E.VarEntry{ty}) => 
+                {exp=(), ty=actual_ty ty}
+            | NONE => (error pos ("undefined variable " S.name id);
+                {exp=(), ty=Types.INT}))
+          | A.FieldVar(v,id,pos)) = 
+            trvar v (*TODO complete*)
     in trexp
     end
 
-  fun transDec(venv, tenv, dec) = {venv=venv, tenv=tenv}
+  fun transDec(venv, tenv, dec) = 
+    case dec of 
+      A.VarDec{name, escape, typ=NONE, init, pos} =>
+        let val {exp,ty} = transExp(venv,tenv,init)
+        in {tenv=tenv, venv=S.enter(venv,name,E.VarEntry{ty=ty})}
+        end
+    | A.VarDec{name, escape, typ=SOME(sym,_), init, pos} =>
+        let val {exp,ty} = transExp(venv,tenv,init)
+            val expected = tenv.look sym
+        in 
+          if expected = ty 
+          then {tenv=tenv, venv=S.enter(venv,name,E.VarEntry{ty=ty})} 
+          else error pos ("Variable type does not match expression result")
+        end
+    | A.TypeDec[] => {venv=venv, tenv=tenv}
+    | A.TypeDec[{name,ty,pos}::t] => 
+        let val {venv', tenv'} = {venv=venv,tenv=S.enter(tenv,name,transTy(tenv,ty))}
+        in transDec(venv', tenv', A.TypeDec t)
+        end
+    | A.FunctionDec[{name,params,body,pos,result=SOME(rt/pos)}]) =
+        let val SOME(result_ty) = S.look(tenv,rt)
+            fun transparam{name,typ,pos} =
+              case S.look(tenv,typ) of 
+                SOME t => {name=name/ty=t}
+              | NONE => (*TODO error*)
+            val params' = map transparam params
+            val venv' = S.enter(venv,name, E.FunEntry{formals= map #ty params',
+                                                      result=result_ty})
+            fun enterparam ({name,ty},venv) = 
+              S.enter(venv,name, E.VarEntry{access=(),ty=ty})
+            val venv'' = fold enterparam params' venv'
+        in transExp(venv'',tenv) body;
+           {venv=venv',tenv=tenv}
+        end
+
   fun transTy(tenv: tenv, ty: Absyn.ty) = Types.NIL
   fun transProg exp = (transExp(Env.base_venv, Env.base_tenv) exp; ())
 end
