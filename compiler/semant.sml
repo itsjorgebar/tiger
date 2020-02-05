@@ -91,10 +91,10 @@ struct
           fun type_error typ = ("Type" ^ S.name typ ^ " is not defined.")
           val result_ty = 
             case result of 
-              NONE => result
+              NONE => T.UNIT
             | SOME(rt,pos) =>
                 case S.look(tenv,rt) of
-                  SOME(result_ty) => result_ty
+                  SOME(result_ty') => result_ty'
                 | NONE =>  ErrorMsg.error pos type_error(rt)
           fun transparam{name,typ,pos} =
             case S.look(tenv,typ) of 
@@ -106,8 +106,11 @@ struct
           fun enterparam ({name,ty},venv) = 
             S.enter(venv,name, E.VarEntry{access=(),ty=ty})
           val venv'' = fold enterparam params' venv' (* TODO maybe specify foldr *)
-        in transExp(venv'',tev) body;
-           {venv=venv',tenv=tenv}
+        in 
+          let {ty=body_ty} = transExp(venv'',tev) body
+          in if body_ty = result_ty then {venv=venv',tenv=tenv}
+             else ErrorMsg.error pos ("Function return type does not match functionn declaratio")
+          end
         end
 
   fun transTy(tenv: tenv, ty: Absyn.ty) = Types.NIL
