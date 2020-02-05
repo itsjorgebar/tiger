@@ -139,7 +139,7 @@ negation: MINUS exp (A.OpExp{left=A.IntExp(0),oper=A.MinusOp,right=exp,pos=MINUS
 
 unit: LPAREN RPAREN (A.NilExp)
 
-record: ID LBRACE ID EQ exp recP RBRACE (A.RecordExp{fields=(Symbol.symbol(ID1), exp, ID1left)::recP, typ=Symbol.symbol(ID2), pos=ID1left})
+record: ID LBRACE ID EQ exp recP RBRACE (A.RecordExp{fields=(Symbol.symbol(ID2), exp, ID2left)::recP, typ=Symbol.symbol(ID1), pos=ID1left})
 
 recP: COMMA ID EQ exp recP ((Symbol.symbol(ID), exp, IDleft)::recP) 
   | ([]) (*TODO: FIx possible bug*)
