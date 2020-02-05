@@ -1,34 +1,35 @@
 structure A = Absyn
 structure S = Symbol
+structure T = Types
 
 structure Translate = struct type exp = unit end
 
 signature SEMANT =
 sig
   type venv = Env.enventry Symbol.table
-  type tenv = Types.ty Symbol.table
-  type expty = {exp: Translate.exp, ty: Types.ty}
+  type tenv = T.ty Symbol.table
+  type expty = {exp: Translate.exp, ty: T.ty}
 
   (* Recursively type-checks an AST *)
   val transProg: Absyn.exp -> unit
   val transVar: venv * tenv * Absyn.var -> expty
   val transExp: venv * tenv -> Absyn.exp -> expty
   val transDec: venv * tenv * Absyn.dec -> {venv: venv, tenv: tenv}
-  val transTy:         tenv * Absyn.ty -> Types.ty
+  val transTy:         tenv * Absyn.ty -> T.ty
 end
 
 structure Semant : SEMANT =
 struct
   type venv = Env.enventry Symbol.table
-  type tenv = Types.ty Symbol.table
-  type expty = {exp: Translate.exp, ty: Types.ty}
+  type tenv = T.ty Symbol.table
+  type expty = {exp: Translate.exp, ty: T.ty}
 
   fun prettyPrint exp = PrintAbsyn.print(TextIO.stdOut, exp)
-  fun transVar(venv, tenv, var) = {exp=(), ty=Types.NIL}
+  fun transVar(venv, tenv, var) = {exp=(), ty=T.NIL}
 
   fun checkint ({exp, ty}, pos) = 
     case ty of 
-      Types.INT => ()
+      T.INT => ()
     | _ => ErrorMsg.error pos "integer required"
 
   fun transExp(venv,tenv) =
@@ -36,15 +37,15 @@ struct
       fun trexp e = 
         case e of
           A.IntExp(num) => 
-            {exp=(), ty=Types.INT}
+            {exp=(), ty=T.INT}
         | A.StringExp(num,_) => 
-            {exp=(), ty=Types.STRING}
+            {exp=(), ty=T.STRING}
         | A.NilExp => 
-            {exp=(), ty=Types.NIL}
+            {exp=(), ty=T.NIL}
         | A.OpExp{left,oper=_,right,pos} =>
             (checkint(trexp left, pos);
             checkint(trexp right, pos);
-            {exp=(), ty=Types.INT})
+            {exp=(), ty=T.INT})
         | A.SeqExp((exp,_)::[]) => trexp exp 
         | A.SeqExp((exp,_)::exps) => (trexp exp; trexp(A.SeqExp(exps)))
         | A.LetExp{decs,body,pos} =
@@ -53,7 +54,7 @@ struct
             in transExp(venv',tenv') body
             end
         | _ =>
-            {exp=(), ty=Types.UNIT} (*TODO: change ty*)
+            {exp=(), ty=T.UNIT} (*TODO: change ty*)
       and trvar e =
         case e of
           A.SimpleVar(id,pos) =>
@@ -61,7 +62,7 @@ struct
               Symbol.look(venv,id) of SOME(E.VarEntry{ty}) => 
                 {exp=(), ty=actual_ty ty}
             | NONE => (ErrorMsg.error pos ("undefined variable " S.name id);
-                {exp=(), ty=Types.INT}))
+                {exp=(), ty=T.INT}))
           | A.FieldVar(v,id,pos)) = 
             trvar v (*TODO complete*)
     in trexp
@@ -113,6 +114,23 @@ struct
           end
         end
 
-  fun transTy(tenv: tenv, ty: Absyn.ty) = Types.NIL
+  fun transTy tenv = 
+      let fun trty ty = case ty of 
+            A.NameTy(symbol,pos) => NAME(symbol, S.look(tenv,symbol))
+          | A.RecordTy(fl) => 
+              let fun trty' [] = []
+                    | trty' {name, typ, pos}::xs =
+                        (name, S.look(tenv,typ))::trty'(xs)
+              in T.RECORD{trty' fl, ref ()}
+              end
+          | A.ArrayTy(symbol,pos) =>
+              let val ty = case S.look(tenv,symbol) of
+                              NONE => (* error *)
+                            | SOME(ty') => ty'
+              in T.ARRAY(ty, ref ())
+              end
+      in trty
+      end
+
   fun transProg exp = (transExp(Env.base_venv, Env.base_tenv) exp; ())
 end
