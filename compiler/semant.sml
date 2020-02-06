@@ -36,23 +36,42 @@ struct
     let 
       fun trexp e = 
         case e of
-          A.IntExp(num) => 
-            {exp=(), ty=T.INT}
-        | A.StringExp(num,_) => 
-            {exp=(), ty=T.STRING}
+          A.VarExp(var) = trvar var
         | A.NilExp => 
             {exp=(), ty=T.NIL}
+        |  A.IntExp(_) => 
+            {exp=(), ty=T.INT}
+        | A.StringExp(_,_) => 
+            {exp=(), ty=T.STRING}
+        | A.CallExp{func,args,pos} => 
+          let val (name, formals, result) = S.look(venv,func)
+              fun comp(arg,formal) = if #ty (trexp arg) = formal 
+                                     then () 
+                                     else ErrorMsg.error pos 
+                                          ("Type mismatch between function formal parameters and arguments")
+          in (app comp zipEq(args,formals) 
+              handle UnequalLengths => 
+                ErrorMsg.error pos ("Invalid number of arguments in function call");
+                {exp=(),ty=result})
+          end
         | A.OpExp{left,oper=_,right,pos} =>
             (checkint(trexp left, pos);
             checkint(trexp right, pos);
             {exp=(), ty=T.INT})
         | A.SeqExp((exp,_)::[]) => trexp exp 
-        | A.SeqExp((exp,_)::exps) => (trexp exp; trexp(A.SeqExp(exps)))
+        | A.SeqExp((exp,_)::exps) => (trexp exp; transExp(venv', tenv') A.SeqExp(exps))
         | A.LetExp{decs,body,pos} =
             let val {venv=venv',tenv=tenv'} =
-              transDec(venv,tenv,decs)
+                  transDec(venv,tenv,decs)
             in transExp(venv',tenv') body
             end
+        | A.RecordExp{fields_list_,typ,pos} =
+        | A.AssignExp{var,exp,pos} =
+        | A.IfExp{test, then', else', pos} =
+        | A.WhileExp{test,body,pos} =
+        | A.BreakExp(pos) =
+        | A.ArrayExp{typ,size,init,pos} =
+        | A.ForExp{var,escape,lo,hi,body,pos} =
         | _ =>
             {exp=(), ty=T.UNIT} (*TODO: change ty*)
       and trvar e =
