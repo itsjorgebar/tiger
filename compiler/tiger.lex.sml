@@ -1,4 +1,4 @@
-functor TigerLexFun (structure Tokens: Tiger_TOKENS)  = struct
+structure Mlex  = struct
 
     structure yyInput : sig
 

@@ -1118,13 +1118,14 @@ end
 end
 |  ( 43, ( ( _, ( _, _, RBRACE1right)) :: ( _, ( MlyValue.recP recP1,
  _, _)) :: ( _, ( MlyValue.exp exp1, _, _)) :: _ :: ( _, ( MlyValue.ID
- ID2, _, _)) :: _ :: ( _, ( MlyValue.ID ID1, ID1left, _)) :: rest671))
- => let val  result = MlyValue.record (fn _ => let val  ID1 = ID1 ()
+ ID2, ID2left, _)) :: _ :: ( _, ( MlyValue.ID ID1, ID1left, _)) :: 
+rest671)) => let val  result = MlyValue.record (fn _ => let val  ID1 =
+ ID1 ()
  val  ID2 = ID2 ()
  val  (exp as exp1) = exp1 ()
  val  (recP as recP1) = recP1 ()
  in (
-A.RecordExp{fields=(Symbol.symbol(ID1), exp, ID1left)::recP, typ=Symbol.symbol(ID2), pos=ID1left}
+A.RecordExp{fields=(Symbol.symbol(ID2), exp, ID2left)::recP, typ=Symbol.symbol(ID1), pos=ID1left}
 )
 end)
  in ( LrTable.NT 20, ( result, ID1left, RBRACE1right), rest671)

@@ -45,8 +45,8 @@ struct
             {exp=(), ty=T.STRING}
         | A.CallExp{func,args,pos} => 
           let val (name, formals, result) = S.look(venv,func)
-              fun comp(arg,formal) = if #ty (trexp arg) = formal 
-                                     then () 
+              fun comp(arg,formal) = if #ty (trexp arg) = formal  (*TODO fix equality*)
+                                     then ()
                                      else ErrorMsg.error pos 
                                           ("Type mismatch between function formal parameters and arguments")
           in (app comp zipEq(args,formals) 
@@ -54,7 +54,7 @@ struct
                 ErrorMsg.error pos ("Invalid number of arguments in function call");
                 {exp=(),ty=result})
           end
-        | A.OpExp{left,oper=_,right,pos} =>
+        | A.OpExp{left,oper=Plus ,right,pos} => (*TODO fix oper value*)
             (checkint(trexp left, pos);
             checkint(trexp right, pos);
             {exp=(), ty=T.INT})
