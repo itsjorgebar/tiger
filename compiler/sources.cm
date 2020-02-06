@@ -9,7 +9,6 @@ parse.sml
 tiger.lex
 tiger.grm
 prabsyn.sml
-semant.sml
 main.sml
 types.sml
 env.sml
