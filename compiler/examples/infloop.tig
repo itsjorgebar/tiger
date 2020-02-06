@@ -1,0 +1,5 @@
+let
+    var count := 0
+in
+    while 1 do (count := count + 1; print(count))
+end
