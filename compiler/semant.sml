@@ -1,5 +1,6 @@
 structure A = Absyn
 structure S = Symbol
+structure E = Env
 
 structure Translate = struct type exp = unit end
 
@@ -44,7 +45,84 @@ struct
       ty1
     else ErrorMsg.error pos "Operand types do not match"
   
-  fun transExp(venv,tenv) =
+  fun transTy tenv = 
+    let fun trty ty = case ty of 
+          (*A.NameTy(symbol,pos) => T.NAME(symbol, S.look(tenv,symbol)) (*We don't know if (*FIX we do not understand NameTy??*)*)*)
+          A.RecordTy(fl) => 
+            let fun trty' [] = []
+                  | trty' ({name, escape, typ, pos}::xs) =
+                      let
+                        val ty = case S.look(tenv,typ) of
+                                    NONE => ErrorMsg.error pos ("Data type not declared in this scope")
+                                  | SOME(ty') => ty'
+                      in
+                        (name, ty)::(trty' xs)
+                      end
+            in T.RECORD (trty' fl, ref ())
+            end
+        | A.ArrayTy(symbol,pos) =>
+            let val ty = case S.look(tenv,symbol) of
+                            NONE => ErrorMsg.error pos ("Data type not declared in this scope")
+                          | SOME(ty') => ty'
+            in T.ARRAY(ty, ref ())
+            end
+    in trty
+    end
+
+  fun transDec(venv, tenv, dec) = 
+    case dec of 
+      A.VarDec{name, escape, typ=NONE, init, pos} =>
+        let val {exp,ty} = transExp(venv,tenv) init
+        in {tenv=tenv, venv=S.enter(venv,name,E.VarEntry{ty=ty})}
+        end
+    | A.VarDec{name, escape, typ=SOME(sym,_), init, pos} =>
+        let val {exp,ty} = transExp(venv,tenv) init
+            val expected = tenv.look sym
+        in 
+          if expected = ty 
+          then {tenv=tenv, venv=S.enter(venv,name,E.VarEntry{ty=ty})} 
+          else  ErrorMsg.error pos ("Variable type does not match expression result"); {exp=(), ty=T.UNIT}
+        end
+    | A.TypeDec[] => {venv=venv, tenv=tenv}
+    | A.TypeDec({name,ty,pos}::t) => 
+        let val {venv', tenv'} = {venv=venv,tenv=S.enter(tenv,name,transTy(tenv,ty))}
+        in transDec(venv', tenv', A.TypeDec t)
+        end
+    | A.FunctionDec[{name,params,body,pos,result}] =>
+        let 
+          fun type_error typ = ("Type" ^ S.name typ ^ " is not defined.")
+          val result_ty = 
+            case result of 
+              NONE => T.UNIT
+            | SOME(rt,pos) =>
+                case S.look(tenv,rt) of
+                  SOME(result_ty') => result_ty'
+                | NONE =>  ErrorMsg.error pos type_error(rt)
+          fun transparam{name,typ,pos} =
+            case S.look(tenv,typ) of 
+              SOME t => {name=name,ty=t}
+            | NONE => (ErrorMsg.error pos type_error(typ); {name="", ty=T.UNIT})
+          val params' = map transparam params
+          val venv' = S.enter(venv,name, E.FunEntry{formals= map #ty params',
+                                                    result= result_ty})
+          fun enterparam ({name,ty},venv) = 
+            S.enter(venv,name, E.VarEntry{access=(),ty=ty})
+          val venv'' = foldr enterparam params' venv' (* TODO maybe specify foldr *)
+        in 
+          let
+            val {ty=body_ty} = transExp(venv'',tenv) body
+          in
+            if
+              body_ty = result_ty
+            then
+              {venv=venv',tenv=tenv}
+            else
+              ErrorMsg.error pos ("Function return type does not match functionn declaratio");
+              {venv=venv',tenv=tenv}
+          end
+        end
+
+  and transExp(venv,tenv) =
     let
       fun trexp e = 
         case e of
@@ -84,7 +162,11 @@ struct
                 {exp=(), ty=ty}
             end
         | A.SeqExp((exp,_)::[]) => trexp exp
-        | A.SeqExp((exp,_)::exps) => (trexp exp; transExp(venv', tenv') A.SeqExp(exps))
+        | A.SeqExp((exp,_)::exps) =>
+            let val {venv=venv',tenv=tenv'} =
+                  transExp(venv,tenv) exp
+            in transExp(venv',tenv') A.SeqExp(exps)
+            end
         | A.LetExp{decs,body,pos} =>
             let val {venv=venv',tenv=tenv'} =
                   transDec(venv,tenv,decs)
@@ -98,26 +180,27 @@ struct
         | A.AssignExp{var=A.SimpleVar(symbol, varpos),exp,pos} =>
             {exp=(), ty=checkeqty(Symbol.look(venv, symbol), trexp exp, varpos)}
         | A.AssignExp{var=A.FieldVar(var, symbol, varpos),exp,pos} => () (* TODO complete*)
-        | A.AssignExp{var=A.SubscriptVar(var, exp, varpos),exp,pos} => () (* TODO complete*)
+        | A.AssignExp{var=A.SubscriptVar(var, s_exp, varpos),exp,pos} => () (* TODO complete*)
         | A.IfExp{test, then', else', pos} =>
-            (checkInt trexp(test); {exp=(), ty=checkeqty(trexp then', trexp else', pos)})
+            (checkint trexp(test); {exp=(), ty=checkeqty(trexp then', trexp else', pos)})
         | A.WhileExp{test,body,pos} =>
-            (checkInt trexp(test); {exp=(), ty=checkeqty(trexp body, T.UNIT, pos)})
+            (checkint trexp(test); {exp=(), ty=checkeqty(trexp body, T.UNIT, pos)})
         | A.BreakExp(pos) => {exp=(), ty=T.UNIT}
         | A.ArrayExp{typ,size,init,pos} =>
-            {exp=(), ty=checkeqty(trexp init', typ, pos)}
+            {exp=(), ty=checkeqty(trexp init, typ, pos)}
         | A.ForExp{var=A.SimpleVar(symbol, varpos),escape,lo,hi,body,pos} =>
             let
-              val vd = VarDec{name=symbol, escape=ref true, typ=NONE, init=lo, pos=varpos}
+              val vd = A.VarDec{name=symbol, escape=ref true, typ=NONE, init=lo, pos=varpos}
               val {venv=venv', tenv=tenv'} = transDec(venv, tenv, vd)
             in
-              (checkInt(trexp lo);
-              checkInt(trexp hi);
+              (checkint(trexp lo);
+              checkint(trexp hi);
               {exp=(), ty=checkeqty (transExp(venv', tenv') body, { exp=(), ty=T.UNIT }, pos)})
             end
         | A.ForExp{var,escape,lo,hi,body,pos} => ()(*TODO complete*)
         | _ =>
             {exp=(), ty=T.UNIT} (*TODO: change ty*)
+      and actual_ty ty = ty
       and trvar e =
         case e of
           A.SimpleVar(id,pos) =>
@@ -133,8 +216,8 @@ struct
                     ErrorMsg.error pos ("Record field " ^ S.name target ^" type not defined")
               |   fl_look((currSym,ty)::xs, target) = 
                     if currSym = target 
-                    then {exp=(), ty=y}
-                    else recLook(xs,target)
+                    then {exp=(), ty=ty}
+                    else fl_look(xs,target)
             in
               case ty of 
                 T.RECORD(fl,_) => fl_look(fl, sym)
@@ -151,82 +234,8 @@ struct
     in trexp
     end
 
-  fun transDec(venv, tenv, dec) = 
-    case dec of 
-      A.VarDec{name, escape, typ=NONE, init, pos} =>
-        let val {exp,ty} = transExp(venv,tenv) init
-        in {tenv=tenv, venv=S.enter(venv,name,E.VarEntry{ty=ty})}
-        end
-    | A.VarDec{name, escape, typ=SOME(sym,_), init, pos} =>
-        let val {exp,ty} = transExp(venv,tenv) init
-            val expected = tenv.look sym
-        in 
-          if expected = ty 
-          then {tenv=tenv, venv=S.enter(venv,name,E.VarEntry{ty=ty})} 
-          else  ErrorMsg.error pos ("Variable type does not match expression result"); {exp=(), ty=T.UNIT}
-        end
-    | A.TypeDec[] => {venv=venv, tenv=tenv}
-    | A.TypeDec[{name,ty,pos}::t] => 
-        let val {venv', tenv'} = {venv=venv,tenv=S.enter(tenv,name,transTy(tenv,ty))}
-        in transDec(venv', tenv', A.TypeDec t)
-        end
-    | A.FunctionDec[{name,params,body,pos,result}] =>
-        let 
-          fun type_error typ = ("Type" ^ S.name typ ^ " is not defined.")
-          val result_ty = 
-            case result of 
-              NONE => T.UNIT
-            | SOME(rt,pos) =>
-                case S.look(tenv,rt) of
-                  SOME(result_ty') => result_ty'
-                | NONE =>  ErrorMsg.error pos type_error(rt)
-          fun transparam{name,typ,pos} =
-            case S.look(tenv,typ) of 
-              SOME t => {name=name,ty=t}
-            | NONE => (ErrorMsg.error pos type_error(typ); {name="", ty=T.UNIT})
-          val params' = map transparam params
-          val venv' = S.enter(venv,name, E.FunEntry{formals= map #ty params',
-                                                    result= result_ty})
-          fun enterparam ({name,ty},venv) = 
-            S.enter(venv,name, E.VarEntry{access=(),ty=ty})
-          val venv'' = fold enterparam params' venv' (* TODO maybe specify foldr *)
-        in 
-          let
-            val {ty=body_ty} = transExp(venv'',tev) body
-          in
-            if
-              body_ty = result_ty
-            then
-              {venv=venv',tenv=tenv}
-            else
-              ErrorMsg.error pos ("Function return type does not match functionn declaratio");
-              {venv=venv',tenv=tenv}
-          end
-        end
+  
 
-  fun transTy tenv = 
-      let fun trty ty = case ty of 
-            A.NameTy(symbol,pos) => NAME(symbol, S.look(tenv,symbol)) (*We don't know if (*FIX we do not understand NameTy??*)*)
-          | A.RecordTy(fl) => 
-              let fun trty' [] = []
-                    | trty' {name, typ, pos}::xs =
-                        let
-                          val ty = case S.look(tenv,typ) of
-                                      NONE => ErrorMsg.error pos ("Data type not declared in this scope")
-                                    | SOME(ty') => ty'
-                        in
-                          (name, ty)::trty'(xs)
-                        end
-              in T.RECORD (trty' fl, ref ())
-              end
-          | A.ArrayTy(symbol,pos) =>
-              let val ty = case S.look(tenv,symbol) of
-                              NONE => ErrorMsg.error pos ("Data type not declared in this scope")
-                            | SOME(ty') => ty'
-              in T.ARRAY(ty, ref ())
-              end
-      in trty
-      end
 
   fun transProg exp = (transExp(Env.base_venv, Env.base_tenv) exp; ())
 end
