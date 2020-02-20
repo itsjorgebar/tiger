@@ -1,6 +1,5 @@
 structure A = Absyn
 structure S = Symbol
-structure T = Types
 
 structure Translate = struct type exp = unit end
 
@@ -9,6 +8,9 @@ sig
   type venv = Env.enventry Symbol.table
   type tenv = T.ty Symbol.table
   type expty = {exp: Translate.exp, ty: T.ty}
+  datatype aritmoper = PlusOp | MinusOp | TimesOp | DivideOp
+  and eqoper = EqOp | NeqOp
+  and compoper = LtOp | LeOp | GtOp | GeOp
 
   (* Recursively type-checks an AST *)
   val transProg: Absyn.exp -> unit
@@ -23,10 +25,9 @@ struct
   type venv = Env.enventry Symbol.table
   type tenv = T.ty Symbol.table
   type expty = {exp: Translate.exp, ty: T.ty}
-
-  datatype aritmoper = A.PlusOp | A.MinusOp | A.TimesOp | A.DivideOp
-  and eqoper = A.EqOp | A.NeqOp
-  and compoper = A.LtOp | A.LeOp | A.GtOp | A.GeOp
+  datatype aritmoper = PlusOp | MinusOp | TimesOp | DivideOp
+  and eqoper = EqOp | NeqOp
+  and compoper = LtOp | LeOp | GtOp | GeOp
 
   fun prettyPrint exp = PrintAbsyn.print(TextIO.stdOut, exp)
   fun transVar(venv, tenv, var) = {exp=(), ty=T.NIL}
@@ -47,7 +48,7 @@ struct
     let
       fun trexp e = 
         case e of
-          A.VarExp(var) => {exp=(), trvar var}
+          A.VarExp(var) => {exp=(), ty=trvar var}
         | A.NilExp => 
             {exp=(), ty=T.NIL}
         |  A.IntExp(_) => 
@@ -92,8 +93,8 @@ struct
         | A.RecordExp{fields=[],typ,pos} =>
             {exp=(), ty=typ}
         | A.RecordExp{fields=(symbol, exp, recpos)::xs,typ,pos} =>
-            checkeqty(Symbol.look(venv, symbol), trexp exp, recpos);
-            trexp A.RecordExp{fields=xs, typ=typ, pos=pos}
+            (checkeqty(Symbol.look(venv, symbol), trexp exp, recpos);
+            trexp A.RecordExp{fields=xs, typ=typ, pos=pos})
         | A.AssignExp{var=A.SimpleVar(symbol, varpos),exp,pos} =>
             {exp=(), ty=checkeqty(Symbol.look(venv, symbol), trexp exp, varpos)}
         | A.AssignExp{var=A.FieldVar(var, symbol, varpos),exp,pos} => () (* TODO complete*)
@@ -114,7 +115,7 @@ struct
               checkInt(trexp hi);
               {exp=(), ty=checkeqty (transExp(venv', tenv') body, { exp=(), ty=T.UNIT }, pos)})
             end
-        | A.ForExp{var,escape,lo,hi,body,pos} => (*TODO complete*)
+        | A.ForExp{var,escape,lo,hi,body,pos} => ()(*TODO complete*)
         | _ =>
             {exp=(), ty=T.UNIT} (*TODO: change ty*)
       and trvar e =
@@ -130,7 +131,7 @@ struct
               val {ty} = trvar inVar
               fun fl_look([], target) = 
                     ErrorMsg.error pos ("Record field " ^ S.name target ^" type not defined")
-                  fl_look((currSym,ty)::xs, target) = 
+              |   fl_look((currSym,ty)::xs, target) = 
                     if currSym = target 
                     then {exp=(), ty=y}
                     else recLook(xs,target)
@@ -169,7 +170,7 @@ struct
         let val {venv', tenv'} = {venv=venv,tenv=S.enter(tenv,name,transTy(tenv,ty))}
         in transDec(venv', tenv', A.TypeDec t)
         end
-    | A.FunctionDec[{name,params,body,pos,result}]) =
+    | A.FunctionDec[{name,params,body,pos,result}] =>
         let 
           fun type_error typ = ("Type" ^ S.name typ ^ " is not defined.")
           val result_ty = 
@@ -182,7 +183,7 @@ struct
           fun transparam{name,typ,pos} =
             case S.look(tenv,typ) of 
               SOME t => {name=name,ty=t}
-            | NONE => ErrorMsg.error pos type_error(typ); {name="", ty=T.UNIT}
+            | NONE => (ErrorMsg.error pos type_error(typ); {name="", ty=T.UNIT})
           val params' = map transparam params
           val venv' = S.enter(venv,name, E.FunEntry{formals= map #ty params',
                                                     result= result_ty})
@@ -191,7 +192,7 @@ struct
           val venv'' = fold enterparam params' venv' (* TODO maybe specify foldr *)
         in 
           let
-            {ty=body_ty} = transExp(venv'',tev) body
+            val {ty=body_ty} = transExp(venv'',tev) body
           in
             if
               body_ty = result_ty
@@ -211,16 +212,16 @@ struct
                     | trty' {name, typ, pos}::xs =
                         let
                           val ty = case S.look(tenv,typ) of
-                                      NONE => ErrorMsg.error pos ("Data type not declared in this scope");
+                                      NONE => ErrorMsg.error pos ("Data type not declared in this scope")
                                     | SOME(ty') => ty'
                         in
                           (name, ty)::trty'(xs)
                         end
-              in T.RECORD{trty' fl, ref ()}
+              in T.RECORD (trty' fl, ref ())
               end
           | A.ArrayTy(symbol,pos) =>
               let val ty = case S.look(tenv,symbol) of
-                              NONE => ErrorMsg.error pos ("Data type not declared in this scope");
+                              NONE => ErrorMsg.error pos ("Data type not declared in this scope")
                             | SOME(ty') => ty'
               in T.ARRAY(ty, ref ())
               end

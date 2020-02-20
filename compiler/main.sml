@@ -6,8 +6,8 @@ struct
         val ast = Parse.parse filename
         fun prettyPrint exp = PrintAbsyn.print(TextIO.stdOut, exp)
       in
-          (*Semant.transProg ast *)
-          prettyPrint ast
+          Semant.transProg ast
+          (*prettyPrint ast*)
       end
 
 end

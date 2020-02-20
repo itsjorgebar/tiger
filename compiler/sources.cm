@@ -12,6 +12,7 @@ prabsyn.sml
 main.sml
 types.sml
 env.sml
+semant.sml
 $/basis.cm
 $/smlnj-lib.cm
 $/ml-yacc-lib.cm
