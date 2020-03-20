@@ -53,8 +53,8 @@ struct
                   | trty' ({name, escape, typ, pos}::xs) =
                       let
                         val ty = case S.look(tenv,typ) of
-                                    NONE => ErrorMsg.error pos ("Data type not declared in this scope")
-                                  | SOME(ty') => ty'
+                                    SOME(ty') => ty'
+                                  | NONE => (ErrorMsg.error pos ("Data type not declared in this scope"); T.UNIT) (*TODO replace return type for this hacky solution*)
                       in
                         (name, ty)::(trty' xs)
                       end
@@ -62,8 +62,8 @@ struct
             end
         | A.ArrayTy(symbol,pos) =>
             let val ty = case S.look(tenv,symbol) of
-                            NONE => ErrorMsg.error pos ("Data type not declared in this scope")
-                          | SOME(ty') => ty'
+                            SOME(ty') => ty'
+                          | NONE => (ErrorMsg.error pos ("Data type not declared in this scope"); T.UNIT)(*TODO replace return type for this hacky solution*)
             in T.ARRAY(ty, ref ())
             end
     in trty
@@ -77,15 +77,17 @@ struct
         end
     | A.VarDec{name, escape, typ=SOME(sym,_), init, pos} =>
         let val {exp,ty} = transExp(venv,tenv) init
-            val expected = tenv.look sym
+            val expected = case S.look(tenv, sym) of
+                              SOME(ty') => ty'
+                            | NONE => (ErrorMsg.error pos ("Data type not declared in this scope"); T.UNIT)(*TODO replace return type for this hacky solution*)
         in 
           if expected = ty 
           then {tenv=tenv, venv=S.enter(venv,name,E.VarEntry{ty=ty})} 
-          else  ErrorMsg.error pos ("Variable type does not match expression result"); {exp=(), ty=T.UNIT}
+          else  (ErrorMsg.error pos ("Variable type does not match expression result"); {tenv=tenv, venv=venv})
         end
     | A.TypeDec[] => {venv=venv, tenv=tenv}
     | A.TypeDec({name,ty,pos}::t) => 
-        let val {venv', tenv'} = {venv=venv,tenv=S.enter(tenv,name,transTy(tenv,ty))}
+        let val {venv', tenv'} = {venv'=venv,tenv'=S.enter(tenv,name,transTy tenv ty) }
         in transDec(venv', tenv', A.TypeDec t)
         end
     | A.FunctionDec[{name,params,body,pos,result}] =>
@@ -97,16 +99,16 @@ struct
             | SOME(rt,pos) =>
                 case S.look(tenv,rt) of
                   SOME(result_ty') => result_ty'
-                | NONE =>  ErrorMsg.error pos type_error(rt)
-          fun transparam{name,typ,pos} =
+                | NONE =>  (ErrorMsg.error pos (type_error rt); T.UNIT)
+          fun transparam{name,escape,typ,pos} =
             case S.look(tenv,typ) of 
               SOME t => {name=name,ty=t}
-            | NONE => (ErrorMsg.error pos type_error(typ); {name="", ty=T.UNIT})
+            | NONE => (ErrorMsg.error pos (type_error typ); {name=name, ty=T.UNIT})
           val params' = map transparam params
           val venv' = S.enter(venv,name, E.FunEntry{formals= map #ty params',
                                                     result= result_ty})
           fun enterparam ({name,ty},venv) = 
-            S.enter(venv,name, E.VarEntry{access=(),ty=ty})
+            S.enter(venv,name, E.VarEntry{ty=ty})
           val venv'' = foldr enterparam params' venv' (* TODO maybe specify foldr *)
         in 
           let
@@ -139,7 +141,7 @@ struct
                                      then ()
                                      else ErrorMsg.error pos 
                                           ("Type mismatch between function formal parameters and arguments")
-          in (app comp zipEq(args,formals) 
+          in (app comp ListPair.zipEq(args,formals) 
               handle UnequalLengths => 
                 ErrorMsg.error pos ("Invalid number of arguments in function call");
                 {exp=(),ty=result})
