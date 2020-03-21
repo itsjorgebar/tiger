@@ -57,18 +57,14 @@ struct
             let fun trty' [] = []
                   | trty' ({name, escape, typ, pos}::xs) =
                       let
-                        val ty = case S.look(tenv,typ) of
-                                    SOME(ty') => ty'
-                                  | NONE => (ErrorMsg.error pos ("Data type not declared in this scope"); T.UNIT) (*TODO replace return type for this hacky solution*)
+                        val ty = nonopt(S.look(tenv,typ), pos)
                       in
                         (name, ty)::(trty' xs)
                       end
             in T.RECORD (trty' fl, ref ())
             end
         | A.ArrayTy(symbol,pos) =>
-            let val ty = case S.look(tenv,symbol) of
-                            SOME(ty') => ty'
-                          | NONE => (ErrorMsg.error pos ("Data type not declared in this scope"); T.UNIT)(*TODO replace return type for this hacky solution*)
+            let val ty = nonopt(S.look(tenv,symbol),pos)
             in T.ARRAY(ty, ref ())
             end
     in trty
@@ -82,13 +78,13 @@ struct
         end
     | A.VarDec{name, escape, typ=SOME(sym,_), init, pos} =>
         let val {exp,ty} = transExp(venv,tenv) init
-            val expected = case S.look(tenv, sym) of
-                              SOME(ty') => ty'
-                            | NONE => (ErrorMsg.error pos ("Data type not declared in this scope"); T.UNIT)(*TODO replace return type for this hacky solution*)
+            val expected = nonopt(S.look(tenv,sym), pos)
         in 
           if expected = ty 
           then {tenv=tenv, venv=S.enter(venv,name,E.VarEntry{ty=ty})} 
-          else  (ErrorMsg.error pos ("Variable type does not match expression result"); {tenv=tenv, venv=venv})
+          else  (ErrorMsg.error pos 
+                 ("Variable type does not match expression result"); 
+                 {tenv=tenv, venv=venv})
         end
     | A.TypeDec[] => {venv=venv, tenv=tenv}
     | A.TypeDec({name,ty,pos}::t) => 
@@ -182,15 +178,8 @@ struct
                 foldr transDec' {venv=venv,tenv=tenv} decs
             in transExp(venv',tenv') body
             end
-        | A.RecordExp{fields=[],typ,pos} =>
-            let
-              val ty' = case S.look(tenv, typ) of
-                          SOME ty'' => ty''
-                        | NONE => (ErrorMsg.error pos 
-                            ("Data type not declared in this scope"); T.UNIT) 
-            in
-              {exp=(), ty=ty'}
-            end
+        | A.RecordExp{fields=[],typ,pos} => 
+            {exp=(), ty=nonopt(S.look(tenv, typ),pos)}
         | A.RecordExp{fields=(symbol, exp, recpos)::xs,typ,pos} =>
             (checkeqty(Symbol.look(venv, symbol), trexp exp, recpos);
             trexp A.RecordExp{fields=xs, typ=typ, pos=pos})
