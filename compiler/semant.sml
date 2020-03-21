@@ -33,17 +33,22 @@ struct
   fun prettyPrint exp = PrintAbsyn.print(TextIO.stdOut, exp)
   fun transVar(venv, tenv, var) = {exp=(), ty=T.NIL}
 
+  (* TODO use this when appropriate *)
+  fun nonopt (SOME ty,_) = ty
+    | nonopt (NONE, pos) = (ErrorMsg.error pos ("Data type not declared in this scope")
+                     ; T.UNIT)
+
   fun checkint ({exp, ty}, pos) = 
     case ty of 
       T.INT => ()
     | _ => ErrorMsg.error pos "integer required"
 
-  fun checkeqty ({exp1, ty1}, {exp2, ty2}, pos) =
+  fun checkeqty ({exp=exp1, ty=ty1}, {exp=exp2, ty=ty2}, pos) =
     if
       ty1 = ty2
     then
       ty1
-    else ErrorMsg.error pos "Operand types do not match"
+    else (ErrorMsg.error pos "Operand types do not match"; T.UNIT)
   
   fun transTy tenv = 
     let fun trty ty = case ty of 
@@ -109,18 +114,18 @@ struct
                                                     result= result_ty})
           fun enterparam ({name,ty},venv) = 
             S.enter(venv,name, E.VarEntry{ty=ty})
-          val venv'' = foldr enterparam params' venv' (* TODO maybe specify foldr *)
-        in 
+          val venv'' = foldr enterparam venv' params'
+        in
           let
-            val {ty=body_ty} = transExp(venv'',tenv) body
+            val {exp=_, ty=body_ty} = transExp(venv'',tenv) body
           in
             if
               body_ty = result_ty
             then
               {venv=venv',tenv=tenv}
             else
-              ErrorMsg.error pos ("Function return type does not match functionn declaratio");
-              {venv=venv',tenv=tenv}
+              (ErrorMsg.error pos ("Function return type does not match functionn declaratio");
+              {venv=venv',tenv=tenv})
           end
         end
 
@@ -136,15 +141,19 @@ struct
         | A.StringExp(_,_) => 
             {exp=(), ty=T.STRING}
         | A.CallExp{func,args,pos} => 
-          let val (name, formals, result) = S.look(venv,func)
+          let val E.FunEntry{formals=formals', result=result'} = 
+                case S.look(venv,func) of
+                  SOME entry => entry
+                | NONE => (ErrorMsg.error pos ("Calling an undefined function");
+                            E.FunEntry{formals=[], result=T.UNIT})
               fun comp(arg,formal) = if #ty (trexp arg) = formal  (*TODO fix equality*)
                                      then ()
                                      else ErrorMsg.error pos 
                                           ("Type mismatch between function formal parameters and arguments")
-          in (app comp ListPair.zipEq(args,formals) 
+          in (app comp (ListPair.zipEq(args,formals'))
               handle UnequalLengths => 
                 ErrorMsg.error pos ("Invalid number of arguments in function call");
-                {exp=(),ty=result})
+                {exp=(),ty=result'})
           end
         | A.OpExp{left,oper=aritmoper,right,pos} =>
             (checkint(trexp left, pos);
@@ -159,23 +168,29 @@ struct
               if
                 ty = T.STRING
               then
-                ErrorMsg.error pos ("Cannot use relational operators on strings")
+                (ErrorMsg.error pos ("Cannot use relational operators on strings"); {exp=(),ty=ty})
               else
                 {exp=(), ty=ty}
             end
         | A.SeqExp((exp,_)::[]) => trexp exp
-        | A.SeqExp((exp,_)::exps) =>
-            let val {venv=venv',tenv=tenv'} =
-                  transExp(venv,tenv) exp
-            in transExp(venv',tenv') A.SeqExp(exps)
-            end
+        | A.SeqExp(_::exps) => transExp(venv,tenv) (A.SeqExp exps)
         | A.LetExp{decs,body,pos} =>
-            let val {venv=venv',tenv=tenv'} =
-                  transDec(venv,tenv,decs)
+            let 
+              fun transDec' (dec, {venv=venv', tenv=tenv'}) = 
+                transDec(venv',tenv',dec)
+              val {venv=venv',tenv=tenv'} = 
+                foldr transDec' {venv=venv,tenv=tenv} decs
             in transExp(venv',tenv') body
             end
         | A.RecordExp{fields=[],typ,pos} =>
-            {exp=(), ty=typ}
+            let
+              val ty' = case S.look(tenv, typ) of
+                          SOME ty'' => ty''
+                        | NONE => (ErrorMsg.error pos 
+                            ("Data type not declared in this scope"); T.UNIT) 
+            in
+              {exp=(), ty=ty'}
+            end
         | A.RecordExp{fields=(symbol, exp, recpos)::xs,typ,pos} =>
             (checkeqty(Symbol.look(venv, symbol), trexp exp, recpos);
             trexp A.RecordExp{fields=xs, typ=typ, pos=pos})
