@@ -9,10 +9,6 @@ sig
   type venv = Env.enventry Symbol.table
   type tenv = T.ty Symbol.table
   type expty = {exp: Translate.exp, ty: T.ty}
-  datatype aritmoper = PlusOp | MinusOp | TimesOp | DivideOp
-  and eqoper = EqOp | NeqOp
-  and compoper = LtOp | LeOp | GtOp | GeOp
-
   (* Recursively type-checks an AST *)
   val transProg: Absyn.exp -> unit
   val transVar: venv * tenv * Absyn.var -> expty
@@ -26,9 +22,6 @@ struct
   type venv = Env.enventry Symbol.table
   type tenv = T.ty Symbol.table
   type expty = {exp: Translate.exp, ty: T.ty}
-  datatype aritmoper = PlusOp | MinusOp | TimesOp | DivideOp
-  and eqoper = EqOp | NeqOp
-  and compoper = LtOp | LeOp | GtOp | GeOp
   fun prettyPrint exp = PrintAbsyn.print(TextIO.stdOut, exp)
   fun transVar(venv, tenv, var) = {exp=(), ty=T.NIL}
   fun nonoptV (SOME entry,_) = entry
@@ -44,12 +37,11 @@ struct
       T.INT => ()
     | _ => ErrorMsg.error pos "integer required"
   fun checkeqty ({exp=exp1, ty=ty1}, {exp=exp2, ty=ty2}, pos) =
-    if
-      ty1 = ty2
-    then
-      ty1
+    if ty1 = ty2 then ty1
     else (ErrorMsg.error pos "Operand types do not match"; T.UNIT)
-
+  fun invalidComp pos = (ErrorMsg.error pos ("Invalid comparison types.");
+    {exp=(),ty=T.UNIT})
+  fun compData(a,b,ty,pos) = if a = b then {exp=(), ty=ty} else invalidComp pos
   fun transTy tenv = 
     let fun trty ty = case ty of 
           (*TODO A.NameTy(symbol,pos) => T.NAME(symbol, S.look(tenv,symbol)) (*We don't know if (*FIX we do not understand NameTy??*)*)*)
@@ -157,24 +149,22 @@ struct
                  ("Invalid number of arguments in function call");
                   {exp=(),ty=result'})
           end
-        | A.OpExp{left,oper=aritmoper,right,pos} =>
-            (checkint(trexp left, pos);
-            checkint(trexp right, pos);
-            {exp=(), ty=T.INT})
-        | A.OpExp{left,oper=eqoper,right,pos} =>
-            {exp=(), ty=checkeqty(trexp left, trexp right, pos)}
-        | A.OpExp{left,oper=compoper,right,pos} =>
-            let
-              val ty = checkeqty(trexp left, trexp right, pos)
-            in
-              if
-                ty = T.STRING
-              then
-                (ErrorMsg.error pos 
-                ("Cannot use relational operators on strings"); {exp=(),ty=ty})
-              else
-                {exp=(), ty=ty}
-            end
+        | A.OpExp{left,oper=(A.PlusOp | A.MinusOp | A.TimesOp | A.DivideOp),
+                  right,pos} => (case checkeqty(trexp left, trexp right, pos) of
+                                  T.INT => {exp=(), ty=T.INT}
+                                | _ => invalidComp pos)
+        | A.OpExp{left,oper=(A.LtOp | A.LeOp | A.GtOp | A.GeOp),
+                  right,pos} => (case checkeqty(trexp left, trexp right, pos) of
+                                  T.INT => {exp=(), ty=T.INT}
+                                | T.STRING => {exp=(), ty=T.STRING}
+                                | _ => invalidComp pos)
+        | A.OpExp{left,oper=(A.EqOp | A.NeqOp),right,pos} => 
+            (case checkeqty(trexp left,trexp right, pos) of 
+              T.INT => {exp=(), ty=T.INT}
+            | T.STRING => {exp=(), ty=T.STRING}
+            | T.RECORD a => {exp=(), ty=T.RECORD a}
+            | T.ARRAY a => {exp=(), ty=T.ARRAY a}
+            | _ => invalidComp pos)
         | A.SeqExp((exp,_)::[]) => trexp exp
         | A.SeqExp(_::exps) => transExp(venv,tenv) (A.SeqExp exps)
         | A.LetExp{decs,body,pos} =>
@@ -202,7 +192,8 @@ struct
             let
               val thenExpty = trexp then'
               val ty' = case else' of 
-                          SOME elseExp => checkeqty(thenExpty, trexp elseExp, pos)
+                          SOME elseExp => 
+                            checkeqty(thenExpty, trexp elseExp, pos)
                         | NONE => #ty thenExpty
             in (checkint (trexp test, pos); {exp=(), ty=ty'})
             end
@@ -222,6 +213,7 @@ struct
               val ty' = checkeqty(transExp(venv', tenv') body, 
                                   { exp=(), ty=T.UNIT }, pos)
             in
+             
               (checkint(trexp lo, pos); checkint(trexp hi, pos); 
                {exp=(), ty=ty'})
             end
@@ -263,7 +255,7 @@ struct
                       expty)
             end
       and validateVarT(venv, symbol, exp, pos) =
-        let 
+        let
           val ty' = case nonoptV(Symbol.look(venv, symbol),pos) of
                       E.VarEntry{ty} => ty
                     | E.FunEntry{formals, result} => result 
@@ -273,8 +265,6 @@ struct
     in trexp
     end
 
-  
-
-
   fun transProg exp = (transExp(Env.base_venv, Env.base_tenv) exp; ())
+
 end
