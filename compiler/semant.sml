@@ -38,14 +38,15 @@ struct
     | _ => ErrorMsg.error pos "integer required"
   fun checkeqty ({exp=exp1, ty=ty1}, {exp=exp2, ty=ty2}, pos) =
     if ty1 = ty2 then ty1
-    else (ErrorMsg.error pos "Operand types do not match"; T.UNIT)
+    else (ErrorMsg.error pos ("Operand types do not match (" ^ T.tyToStr ty1 ^ 
+          "," ^ T.tyToStr ty2 ^ ")."); T.UNIT)
   fun invalidComp pos = (ErrorMsg.error pos ("Invalid comparison types.");
     {exp=(),ty=T.UNIT})
   fun compData(a,b,ty,pos) = if a = b then {exp=(), ty=ty} else invalidComp pos
   fun transTy tenv = 
     let fun trty ty = case ty of 
-          (*TODO A.NameTy(symbol,pos) => T.NAME(symbol, S.look(tenv,symbol)) (*We don't know if (*FIX we do not understand NameTy??*)*)*)
-          A.RecordTy(fl) => 
+           A.NameTy(sym,pos) => nonoptT(S.look(tenv,sym),pos)
+        |  A.RecordTy(fl) => 
             let fun trty' [] = []
                   | trty' ({name, escape, typ, pos}::xs) =
                       let
@@ -84,7 +85,8 @@ struct
           {venv'=venv,tenv'=S.enter(tenv,name,transTy tenv ty) }
         in transDec(venv', tenv', A.TypeDec t)
         end
-    | A.FunctionDec[{name,params,body,pos,result}] =>
+    | A.FunctionDec[] => {venv=venv,tenv=tenv}
+    | A.FunctionDec({name,params,body,pos,result}::xs) =>
         let 
           fun type_error typ = ("Type" ^ S.name typ ^ " is not defined.")
           val result_ty = 
@@ -106,49 +108,39 @@ struct
             S.enter(venv,name, E.VarEntry{ty=ty})
           val venv'' = foldr enterparam venv' params'
         in
-          let
-            val {exp=_, ty=body_ty} = transExp(venv'',tenv) body
-          in
-            if
-              body_ty = result_ty
-            then
-              {venv=venv',tenv=tenv}
-            else
+          let val {exp=_, ty=body_ty} = transExp(venv'',tenv) body
+          in if body_ty = result_ty then {venv=venv',tenv=tenv} else
               (ErrorMsg.error pos 
-                ("Function return type does not match functionn declaratio");
-                {venv=venv',tenv=tenv})
+                ("Function return type does not match its declaration");
+              transDec(venv',tenv,A.FunctionDec xs))
           end
         end
-
   and transExp(venv,tenv) =
     let
       fun trexp e = 
         case e of
           A.VarExp(var) => trvar var
-        | A.NilExp => 
-            {exp=(), ty=T.NIL}
-        |  A.IntExp(_) => 
-            {exp=(), ty=T.INT}
-        | A.StringExp(_,_) => 
-            {exp=(), ty=T.STRING}
+        | A.NilExp => {exp=(), ty=T.NIL}
+        | A.IntExp(_) => {exp=(), ty=T.INT}
+        | A.StringExp(_,_) => {exp=(), ty=T.STRING}
         | A.CallExp{func,args,pos} => 
-          let val E.FunEntry{formals=formals', result=result'} = 
-                case S.look(venv,func) of
-                  SOME entry => entry
-                | NONE => (ErrorMsg.error pos ("Calling an undefined function");
-                            E.FunEntry{formals=[], result=T.UNIT})
-              fun comp(arg,formal) = if #ty (trexp arg) = formal  
-                                        (*TODO maybe fix equality*)
-                                     then ()
-                                     else ErrorMsg.error pos 
-                                          ("Type mismatch between function "^
-                                            "formal parameters and arguments")
-          in (app comp (ListPair.zipEq(args,formals'))
-              handle UnequalLengths => 
-                ErrorMsg.error pos 
-                 ("Invalid number of arguments in function call");
-                  {exp=(),ty=result'})
-          end
+            let val E.FunEntry{formals=formals', result=result'} = 
+                  case S.look(venv,func) of
+                    SOME entry => entry
+                  | NONE => (ErrorMsg.error pos ("Calling an undefined function");
+                              E.FunEntry{formals=[], result=T.UNIT})
+                fun comp(arg,formal) = if #ty (trexp arg) = formal  
+                                          (*TODO maybe fix equality*)
+                                       then ()
+                                       else ErrorMsg.error pos 
+                                            ("Type mismatch between function "^
+                                              "formal parameters and arguments")
+            in (app comp (ListPair.zipEq(args,formals'))
+                handle UnequalLengths => 
+                  ErrorMsg.error pos 
+                   ("Invalid number of arguments in function call");
+                    {exp=(),ty=result'})
+            end
         | A.OpExp{left,oper=(A.PlusOp | A.MinusOp | A.TimesOp | A.DivideOp),
                   right,pos} => (case checkeqty(trexp left, trexp right, pos) of
                                   T.INT => {exp=(), ty=T.INT}
