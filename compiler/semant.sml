@@ -18,7 +18,7 @@ sig
   val transVar: venv * tenv * Absyn.var -> expty
   val transExp: venv * tenv -> Absyn.exp -> expty
   val transDec: venv * tenv * Absyn.dec -> {venv: venv, tenv: tenv}
-  val transTy:         tenv * Absyn.ty -> T.ty
+  val transTy:         tenv -> Absyn.ty -> T.ty
 end
 
 structure Semant : SEMANT =
@@ -52,7 +52,7 @@ struct
 
   fun transTy tenv = 
     let fun trty ty = case ty of 
-          (*A.NameTy(symbol,pos) => T.NAME(symbol, S.look(tenv,symbol)) (*We don't know if (*FIX we do not understand NameTy??*)*)*)
+          (*TODO A.NameTy(symbol,pos) => T.NAME(symbol, S.look(tenv,symbol)) (*We don't know if (*FIX we do not understand NameTy??*)*)*)
           A.RecordTy(fl) => 
             let fun trty' [] = []
                   | trty' ({name, escape, typ, pos}::xs) =
@@ -132,7 +132,7 @@ struct
     let
       fun trexp e = 
         case e of
-          A.VarExp(var) => {exp=(), ty=trvar var}
+          A.VarExp(var) => trvar var
         | A.NilExp => 
             {exp=(), ty=T.NIL}
         |  A.IntExp(_) => 
@@ -214,52 +214,53 @@ struct
             let val ty' = nonoptT(S.look(tenv,typ),pos)
             in {exp=(), ty=checkeqty(trexp init, {exp=(),ty=ty'}, pos)}
             end
-        | A.ForExp{var=A.SimpleVar(symbol, varpos),escape,lo,hi,body,pos} =>
+        | A.ForExp{var,escape,lo,hi,body,pos} =>
             let
-              val vd = A.VarDec{name=symbol, escape=ref true, typ=NONE, init=lo,
-                                pos=varpos}
+              val vd = A.VarDec{name=var, escape=ref true, typ=NONE, init=lo,
+                                pos=pos}
               val {venv=venv', tenv=tenv'} = transDec(venv, tenv, vd)
+              val ty' = checkeqty(transExp(venv', tenv') body, 
+                                  { exp=(), ty=T.UNIT }, pos)
             in
-              (checkint(trexp lo);
-              checkint(trexp hi);
-              {exp=(), ty=checkeqty (transExp(venv', tenv') body, 
-                                      { exp=(), ty=T.UNIT }, pos)})
+              (checkint(trexp lo, pos); checkint(trexp hi, pos); 
+               {exp=(), ty=ty'})
             end
-        | A.ForExp{var,escape,lo,hi,body,pos} => ()(*TODO complete*)
         | _ =>
             {exp=(), ty=T.UNIT} (*TODO: change ty*)
-      and actual_ty ty = ty
       and trvar e =
         case e of
           A.SimpleVar(id,pos) =>
-            (case Symbol.look(venv,id) of 
-              SOME(E.VarEntry{ty}) => {exp=(), ty=actual_ty ty}
-            | NONE => (ErrorMsg.error pos ("undefined variable " S.name id);
-            {exp=(), ty=T.INT}))
+            (case Symbol.look(tenv,id) of 
+              SOME ty => {exp=(), ty=ty}
+            | NONE => (ErrorMsg.error pos ("undefined variable " ^ S.name id);
+                       {exp=(), ty=T.UNIT}))
         | A.FieldVar(inVar,sym,pos) =>
             let
-              val {ty} = trvar inVar
+              val {exp,ty} = trvar inVar
               fun fl_look([], target) = 
-                    ErrorMsg.error pos 
-                      ("Record field " ^ S.name target ^" type not defined")
-              |   fl_look((currSym,ty)::xs, target) = 
+                    (ErrorMsg.error pos 
+                      ("Record field " ^ S.name target ^ " type not defined");
+                     {exp=(), ty=ty})
+                | fl_look((currSym,ty)::xs, target) = 
                     if currSym = target 
                     then {exp=(), ty=ty}
                     else fl_look(xs,target)
             in
               case ty of 
                 T.RECORD(fl,_) => fl_look(fl, sym)
-              | _ => ErrorMsg.error pos ("Field dot suffix cannot be applied " ^
-                                         "to a non-record type variable")
+              | _ => (ErrorMsg.error pos ("Field dot suffix cannot be applied" ^
+                                         " to a non-record type variable");
+                      {exp=(), ty=ty})
             end
         | A.SubscriptVar(inVar,exp,pos) =>
-            let
-              val {ty} = trvar inVar
+            let val expty = trvar inVar
             in
-              case ty of 
-                T.ARRAY(arrTy,_) => (checkint (trexp exp); arrTy)
-              | _ => ErrorMsg.error pos ("Subscript suffix cannot be applied " ^
-                                         "to a non-array type variable")
+              case #ty expty of 
+                T.ARRAY(_,_) => (checkint(trexp exp, pos); expty)
+              | _ => (ErrorMsg.error pos 
+                      ("Subscript suffix cannot be applied to a non-array " ^ 
+                       "type variable");
+                      expty)
             end
       and validateVarT(venv, symbol, exp, pos) =
         let 
