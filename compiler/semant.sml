@@ -203,7 +203,7 @@ struct
                {exp=(), ty=ty'})
             end
         | _ =>
-            {exp=(), ty=T.UNIT} (*TODO: change ty*)
+            {exp=(), ty=T.UNIT}
       and trvar e =
         case e of
           A.SimpleVar(id,pos) =>
