@@ -123,7 +123,8 @@ struct
         | A.StringExp(_,_) => {exp=(), ty=T.STRING}
         | A.CallExp{func,args,pos} => 
             let val E.FunEntry{formals,result} = case S.look(venv,func) of
-                   SOME (E.FunEntry{formals=f,result=r}) => E.FunEntry{formals=f,result=r}
+                   SOME (E.FunEntry{formals=f,result=r}) => 
+                      E.FunEntry{formals=f,result=r}
                  | _ => (ErrorMsg.error pos ("Calling an undefined function");
                               E.FunEntry{formals=[], result=T.UNIT})
                 fun comp(arg,formal) = if #ty (trexp arg) = formal  
