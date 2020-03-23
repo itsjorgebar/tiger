@@ -167,14 +167,6 @@ struct
         | A.RecordExp{fields=(symbol, exp, recpos)::xs,typ,pos} =>
             (validateVarT(venv,symbol,exp,recpos);
              trexp(A.RecordExp{fields=xs, typ=typ, pos=pos}))
-       (* | A.AssignExp{var=(A.SimpleVar(symbol, varpos) 
-                         | A.FieldVar(_, symbol, varpos)),exp,pos} =>
-            (validateVarT(venv,symbol,exp,varpos);
-            {exp=(),ty=T.UNIT})
-        | A.AssignExp{var=A.SubscriptVar(var, sExp, varpos),exp,pos} => 
-           (checkint(trexp sExp, pos);
-           checkeqty(trvar var,trexp exp,pos);
-           {exp=(),ty=T.UNIT}) *)
         | A.AssignExp{var,exp,pos} => (checkeqty(trvar var, trexp exp, pos); 
             {exp=(),ty=T.UNIT})
         | A.IfExp{test, then', else', pos} =>
