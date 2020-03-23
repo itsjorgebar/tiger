@@ -175,10 +175,8 @@ struct
            (checkint(trexp sExp, pos);
            checkeqty(trvar var,trexp exp,pos);
            {exp=(),ty=T.UNIT}) *)
-        | A.AssignExp{var,exp,pos} => 
-            let val expty = trexp exp
-            in (checkeqty(trvar var, expty, pos); expty)
-            end 
+        | A.AssignExp{var,exp,pos} => (checkeqty(trvar var, trexp exp, pos); 
+            {exp=(),ty=T.UNIT})
         | A.IfExp{test, then', else', pos} =>
             let val thenExpty = trexp then'
                 val ty' = case else' of 
