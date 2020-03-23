@@ -87,33 +87,30 @@ struct
         end
     | A.FunctionDec[] => {venv=venv,tenv=tenv}
     | A.FunctionDec({name,params,body,pos,result}::xs) =>
-        let 
-          fun type_error typ = ("Type" ^ S.name typ ^ " is not defined.")
-          val result_ty = 
-            case result of 
-              NONE => T.UNIT
-            | SOME(rt,pos) =>
-                case S.look(tenv,rt) of
-                  SOME(result_ty') => result_ty'
-                | NONE =>  (ErrorMsg.error pos (type_error rt); T.UNIT)
-          fun transparam{name,escape,typ,pos} =
-            case S.look(tenv,typ) of 
-              SOME t => {name=name,ty=t}
-            | NONE => (ErrorMsg.error pos (type_error typ); 
-                        {name=name, ty=T.UNIT})
-          val params' = map transparam params
-          val venv' = S.enter(venv,name, E.FunEntry{formals= map #ty params',
-                                                    result= result_ty})
-          fun enterparam ({name,ty},venv) = 
-            S.enter(venv,name, E.VarEntry{ty=ty})
-          val venv'' = foldr enterparam venv' params'
-        in
-          let val {exp=_, ty=body_ty} = transExp(venv'',tenv) body
-          in if body_ty = result_ty then {venv=venv',tenv=tenv} else
-              (ErrorMsg.error pos 
+        let fun type_error typ = ("Type" ^ S.name typ ^ " is not defined.")
+            val result_ty = 
+              case result of 
+                NONE => T.UNIT
+              | SOME(rt,pos) =>
+                  case S.look(tenv,rt) of
+                    SOME(result_ty') => result_ty'
+                  | NONE =>  (ErrorMsg.error pos (type_error rt); T.UNIT)
+            fun transparam{name,escape,typ,pos} =
+              case S.look(tenv,typ) of 
+                SOME t => {name=name,ty=t}
+              | NONE => (ErrorMsg.error pos (type_error typ); 
+                          {name=name, ty=T.UNIT})
+            val params' = map transparam params
+            val venv' = S.enter(venv,name, E.FunEntry{formals= map #ty params',
+                                                      result= result_ty})
+            fun enterparam ({name,ty},venv) = 
+              S.enter(venv,name, E.VarEntry{ty=ty})
+            val venv'' = foldr enterparam venv' params'
+            val {exp=_, ty=body_ty} = transExp(venv'',tenv) body
+        in if body_ty = result_ty then {venv=venv',tenv=tenv} else
+             (ErrorMsg.error pos 
                 ("Function return type does not match its declaration");
               transDec(venv',tenv,A.FunctionDec xs))
-          end
         end
   and transExp(venv,tenv) =
     let
@@ -124,22 +121,20 @@ struct
         | A.IntExp(_) => {exp=(), ty=T.INT}
         | A.StringExp(_,_) => {exp=(), ty=T.STRING}
         | A.CallExp{func,args,pos} => 
-            let val E.FunEntry{formals=formals', result=result'} = 
-                  case S.look(venv,func) of
-                    SOME entry => entry
-                  | NONE => (ErrorMsg.error pos ("Calling an undefined function");
+            let val E.FunEntry{formals,result} = case S.look(venv,func) of
+                 SOME (E.FunEntry x) => E.FunEntry x 
+                 | _ => (ErrorMsg.error pos ("Calling an undefined function");
                               E.FunEntry{formals=[], result=T.UNIT})
                 fun comp(arg,formal) = if #ty (trexp arg) = formal  
-                                          (*TODO maybe fix equality*)
                                        then ()
                                        else ErrorMsg.error pos 
                                             ("Type mismatch between function "^
                                               "formal parameters and arguments")
-            in (app comp (ListPair.zipEq(args,formals'))
+            in (app comp (ListPair.zipEq(args,formals))
                 handle UnequalLengths => 
                   ErrorMsg.error pos 
                    ("Invalid number of arguments in function call");
-                    {exp=(),ty=result'})
+                    {exp=(),ty=result})
             end
         | A.OpExp{left,oper=(A.PlusOp | A.MinusOp | A.TimesOp | A.DivideOp),
                   right,pos} => (case checkeqty(trexp left, trexp right, pos) of
@@ -174,19 +169,17 @@ struct
              trexp(A.RecordExp{fields=xs, typ=typ, pos=pos}))
         | A.AssignExp{var=A.SimpleVar(symbol, varpos),exp,pos} =>
             {exp=(), ty=validateVarT(venv,symbol,exp,varpos)}
-            (* TODO complete next line*)
-        | A.AssignExp{var=A.FieldVar(var, symbol, varpos),exp,pos} => 
-           {exp=(), ty=T.UNIT} 
-           (* TODO complete next line*)
-        | A.AssignExp{var=A.SubscriptVar(var, s_exp, varpos),exp,pos} => 
-           {exp=(), ty=T.UNIT}
+        | A.AssignExp{var=A.FieldVar(_, symbol, varpos),exp,pos} => 
+           {exp=(), ty=validateVarT(venv,symbol,exp,varpos)} 
+        | A.AssignExp{var=A.SubscriptVar(var, sExp, varpos),exp,pos} => 
+           (checkint(trexp sExp, pos);
+            {exp=(), ty=checkeqty(trvar var,trexp exp, pos)})
         | A.IfExp{test, then', else', pos} =>
-            let
-              val thenExpty = trexp then'
-              val ty' = case else' of 
-                          SOME elseExp => 
-                            checkeqty(thenExpty, trexp elseExp, pos)
-                        | NONE => #ty thenExpty
+            let val thenExpty = trexp then'
+                val ty' = case else' of 
+                            SOME elseExp => 
+                              checkeqty(thenExpty, trexp elseExp, pos)
+                          | NONE => #ty thenExpty
             in (checkint (trexp test, pos); {exp=(), ty=ty'})
             end
         | A.WhileExp{test,body,pos} =>
@@ -214,9 +207,9 @@ struct
       and trvar e =
         case e of
           A.SimpleVar(id,pos) =>
-            (case Symbol.look(tenv,id) of 
-              SOME ty => {exp=(), ty=ty}
-            | NONE => (ErrorMsg.error pos ("undefined variable " ^ S.name id);
+            (case Symbol.look(venv,id) of 
+              SOME(E.VarEntry{ty}) => {exp=(), ty=ty}
+            | _ => (ErrorMsg.error pos ("undefined variable " ^ S.name id);
                        {exp=(), ty=T.UNIT}))
         | A.FieldVar(inVar,sym,pos) =>
             let
