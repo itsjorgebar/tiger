@@ -12,8 +12,8 @@ sig
   (* Recursively type-checks an AST *)
   val transProg: Absyn.exp -> unit
   val transVar: venv * tenv * Absyn.var -> expty
-  val transExp: venv * tenv -> Absyn.exp -> expty
-  val transDec: venv * tenv * Absyn.dec -> {venv: venv, tenv: tenv}
+  val transExp: venv * tenv * int -> Absyn.exp -> expty
+  val transDec: venv * tenv * Absyn.dec * int -> {venv: venv, tenv: tenv}
   val transTy:         tenv -> Absyn.ty -> T.ty
 end
 
@@ -63,18 +63,19 @@ struct
     in trty
     end
 
-  fun transDec(venv, tenv, dec) = 
+  fun transDec(venv, tenv, dec, break) = 
     case dec of 
       A.VarDec{name, escape, typ=NONE, init, pos} =>
-        let val {exp,ty} = transExp(venv,tenv) init
+        let val {exp,ty} = transExp(venv,tenv,break) init
         in {tenv=tenv, venv=S.enter(venv,name,E.VarEntry{ty=ty})}
         end
     | A.VarDec{name, escape, typ=SOME(sym,_), init, pos} =>
-        let val {exp,ty} = transExp(venv,tenv) init
+        let val {exp,ty} = transExp(venv,tenv,break) init
             val expected = nonoptT(S.look(tenv,sym), pos)
         in if expected = ty 
            then transDec(venv,tenv,
-              A.VarDec{name=name, escape=escape, typ=NONE, init=init, pos=pos})          
+              A.VarDec{name=name, escape=escape, typ=NONE, init=init, pos=pos}, 
+              break)          
            else  (ErrorMsg.error pos 
                  ("Variable type does not match expression result"); 
                  {tenv=tenv, venv=venv})
@@ -83,7 +84,7 @@ struct
     | A.TypeDec({name,ty,pos}::t) => 
         let val {venv', tenv'} = 
           {venv'=venv,tenv'=S.enter(tenv,name,transTy tenv ty) }
-        in transDec(venv', tenv', A.TypeDec t)
+        in transDec(venv', tenv', A.TypeDec t, break)
         end
     | A.FunctionDec[] => {venv=venv,tenv=tenv}
     | A.FunctionDec({name,params,body,pos,result}::xs) =>
@@ -106,14 +107,14 @@ struct
             fun enterparam ({name,ty},venv) = 
               S.enter(venv,name, E.VarEntry{ty=ty})
             val venv'' = foldr enterparam venv' params'
-            val {exp=_, ty=body_ty} = transExp(venv'',tenv) body
+            val {exp=_, ty=body_ty} = transExp(venv'',tenv, break) body
         in if body_ty = result_ty
-           then transDec(venv',tenv,A.FunctionDec xs)
+           then transDec(venv',tenv,A.FunctionDec xs, break)
            else (ErrorMsg.error pos 
                 "Function return type does not match its declaration"; 
                 {venv=venv,tenv=tenv})
         end
-  and transExp(venv,tenv) =
+  and transExp(venv,tenv,break) =
     let
       fun trexp e = 
         case e of
@@ -151,13 +152,13 @@ struct
             | T.ARRAY a => {exp=(), ty=T.ARRAY a}
             | _ => invalidComp pos)
         | A.SeqExp((exp,_)::[]) => trexp exp
-        | A.SeqExp(_::exps) => transExp(venv,tenv) (A.SeqExp exps)
+        | A.SeqExp(_::exps) => transExp(venv,tenv,break) (A.SeqExp exps)
         | A.LetExp{decs,body,pos} =>
             let fun transDec' (dec, {venv=venv', tenv=tenv'}) = 
-                  transDec(venv',tenv',dec)
+                  transDec(venv',tenv',dec,break)
                 val {venv=venv',tenv=tenv'} = 
                   foldl transDec' {venv=venv,tenv=tenv} decs
-            in transExp(venv',tenv') body
+            in transExp(venv',tenv',break) body
             end
         | A.RecordExp{fields=[],typ,pos} => 
             {exp=(), ty=nonoptT(S.look(tenv, typ),pos)}
@@ -176,8 +177,11 @@ struct
             end
         | A.WhileExp{test,body,pos} =>
             (checkint (trexp test, pos); 
-              {exp=(), ty=checkeqty(trexp body, {exp=(), ty=T.UNIT}, pos)})
-        | A.BreakExp(pos) => {exp=(), ty=T.UNIT}
+             {exp=(),ty=checkeqty((transExp(venv,tenv,break+1) body), 
+                                   {exp=(), ty=T.UNIT}, pos)})
+        | A.BreakExp(pos) => if break > 0 then {exp=(), ty=T.UNIT} else 
+            (ErrorMsg.error pos ("Break not enclosed in loop.");
+             {exp=(),ty=T.UNIT})
         | A.ArrayExp{typ,size,init,pos} =>
             (case nonoptT(S.look(tenv,typ),pos) of
               arr as T.ARRAY(ty,_) => (checkeqty(trexp init, {exp=(),ty=ty}, pos); 
@@ -187,11 +191,10 @@ struct
         | A.ForExp{var,escape,lo,hi,body,pos} =>
             let val vd = A.VarDec{name=var, escape=ref true, typ=NONE, init=lo,
                                 pos=pos}
-                val {venv=venv', tenv=tenv'} = transDec(venv, tenv, vd)
-                val ty' = checkeqty(transExp(venv', tenv') body, 
-                                  {exp=(), ty=T.UNIT}, pos)
+                val {venv=venv', tenv=tenv'} = transDec(venv, tenv, vd, break)
             in (checkint(trexp lo, pos); checkint(trexp hi, pos); 
-               {exp=(), ty=ty'})
+                {exp=(),ty=checkeqty(transExp(venv', tenv',break+1) body, 
+                                  {exp=(), ty=T.UNIT}, pos)})
             end
         | _ =>
             {exp=(), ty=T.UNIT}
@@ -234,6 +237,6 @@ struct
     in trexp
     end
 
-  fun transProg exp = (transExp(Env.base_venv, Env.base_tenv) exp; ())
+  fun transProg exp = (transExp(Env.base_venv, Env.base_tenv, 0) exp; ())
 
 end
