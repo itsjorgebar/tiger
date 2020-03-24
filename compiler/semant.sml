@@ -122,21 +122,17 @@ struct
         | A.IntExp(_) => {exp=(), ty=T.INT}
         | A.StringExp(_,_) => {exp=(), ty=T.STRING}
         | A.CallExp{func,args,pos} => 
-            let val E.FunEntry{formals,result} = case S.look(venv,func) of
-                   SOME (E.FunEntry{formals=f,result=r}) => 
-                      E.FunEntry{formals=f,result=r}
-                 | _ => (ErrorMsg.error pos ("Calling an undefined function");
-                              E.FunEntry{formals=[], result=T.UNIT})
-                fun comp(arg,formal) = if #ty (trexp arg) = formal  
-                                       then ()
-                                       else ErrorMsg.error pos 
-                                            ("Type mismatch between function "^
-                                              "formal parameters and arguments")
-            in (app comp (ListPair.zipEq(args,formals))
-                handle UnequalLengths => 
-                  ErrorMsg.error pos 
-                   ("Invalid number of arguments in function call");
-                    {exp=(),ty=result})
+            let fun comp(arg,formal) = 
+              if #ty (trexp arg) = formal then () else ErrorMsg.error pos 
+               ("Type mismatch between function formal parameters and args")
+            in case S.look(venv,func) of
+                SOME (E.FunEntry{formals,result}) =>
+                  (app comp (ListPair.zipEq(args,formals))
+                    handle UnequalLengths => ErrorMsg.error pos 
+                       ("Invalid number of arguments in function call");
+                        {exp=(),ty=result})
+                | _ => (ErrorMsg.error pos ("Calling an undefined function");
+                        {exp=(),ty=T.UNIT})
             end
         | A.OpExp{left,oper=(A.PlusOp | A.MinusOp | A.TimesOp | A.DivideOp),
                   right,pos} => (case checkeqty(trexp left, trexp right, pos) of
@@ -183,9 +179,11 @@ struct
               {exp=(), ty=checkeqty(trexp body, {exp=(), ty=T.UNIT}, pos)})
         | A.BreakExp(pos) => {exp=(), ty=T.UNIT}
         | A.ArrayExp{typ,size,init,pos} =>
-            let val arr as T.ARRAY(ty,_) = nonoptT(S.look(tenv,typ),pos)
-            in (checkeqty(trexp init, {exp=(),ty=ty}, pos); {exp=(),ty=arr})
-            end
+            (case nonoptT(S.look(tenv,typ),pos) of
+              arr as T.ARRAY(ty,_) => (checkeqty(trexp init, {exp=(),ty=ty}, pos); 
+                                {exp=(),ty=arr})
+            | _ => (ErrorMsg.error pos ("Array expected.");
+                    {exp=(),ty=T.UNIT}))
         | A.ForExp{var,escape,lo,hi,body,pos} =>
             let val vd = A.VarDec{name=var, escape=ref true, typ=NONE, init=lo,
                                 pos=pos}
