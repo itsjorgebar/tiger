@@ -22,7 +22,6 @@ struct
   type venv = Env.enventry Symbol.table
   type tenv = T.ty Symbol.table
   type expty = {exp: Translate.exp, ty: T.ty}
-  datatype decAction = HEADER | ASSIGN | BODY
   fun prettyPrint exp = PrintAbsyn.print(TextIO.stdOut, exp)
   fun transVar(venv, tenv, var) = {exp=(), ty=T.NIL}
   fun nonoptV (SOME entry,_) = entry
