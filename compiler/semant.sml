@@ -22,6 +22,7 @@ struct
   type venv = Env.enventry Symbol.table
   type tenv = T.ty Symbol.table
   type expty = {exp: Translate.exp, ty: T.ty}
+  datatype decAction = HEADER | ASSIGN | BODY
   fun prettyPrint exp = PrintAbsyn.print(TextIO.stdOut, exp)
   fun transVar(venv, tenv, var) = {exp=(), ty=T.NIL}
   fun nonoptV (SOME entry,_) = entry
@@ -43,6 +44,7 @@ struct
   fun invalidComp pos = (ErrorMsg.error pos ("Invalid comparison types.");
     {exp=(),ty=T.UNIT})
   fun compData(a,b,ty,pos) = if a = b then {exp=(), ty=ty} else invalidComp pos
+  fun actualTy ty = case ty of T.NAME(_,ref(SOME ty')) => ty' | _ => ty
   fun transTy tenv = 
     let fun trty ty = case ty of 
            A.NameTy(sym,pos) => nonoptT(S.look(tenv,sym),pos)
@@ -62,7 +64,26 @@ struct
             end
     in trty
     end
-
+  fun processMutrecTypeHeaders(tenv,dec) =
+      case dec of 
+        A.TypeDec[] => tenv
+      | A.TypeDec({name,ty,pos}::ds) => 
+          let val tenv' = S.enter(tenv,name,T.NAME(name,ref NONE))
+          in processMutrecTypeHeaders(tenv',A.TypeDec ds)
+          end
+      | _ => tenv
+  fun processMutrecTypeBodys(tenv,dec) =
+      case dec of 
+        A.TypeDec[] => tenv
+      | A.TypeDec({name,ty,pos}::ds) => 
+          (case S.look(tenv,name) of 
+            SOME(T.NAME(_,p)) => 
+              let val tenv' = (p := SOME (transTy tenv ty); 
+                               S.enter(tenv,name,actualTy (T.NAME(name,p))))
+              in processMutrecTypeBodys(tenv',A.TypeDec ds)
+              end
+          | _ => tenv)
+      | _ => tenv
   fun transDec(venv, tenv, dec, break) = 
     case dec of 
       A.VarDec{name, escape, typ=NONE, init, pos} =>
@@ -81,10 +102,10 @@ struct
                  {tenv=tenv, venv=venv})
         end
     | A.TypeDec[] => {venv=venv, tenv=tenv}
-    | A.TypeDec({name,ty,pos}::t) => 
-        let val {venv', tenv'} = 
-          {venv'=venv,tenv'=S.enter(tenv,name,transTy tenv ty) }
-        in transDec(venv', tenv', A.TypeDec t, break)
+    | typeDec as A.TypeDec({name,ty,pos}::t) => 
+        let val tenv' = processMutrecTypeHeaders(tenv,typeDec)
+            val tenv'' = processMutrecTypeBodys(tenv',typeDec)
+        in {tenv=tenv'',venv=venv}
         end
     | A.FunctionDec[] => {venv=venv,tenv=tenv}
     | A.FunctionDec({name,params,body,pos,result}::xs) =>
@@ -132,8 +153,7 @@ struct
                     handle UnequalLengths => ErrorMsg.error pos 
                        ("Invalid number of arguments in function call");
                         {exp=(),ty=result})
-                | _ => (ErrorMsg.error pos ("Calling an undefined function");
-                        {exp=(),ty=T.UNIT})
+                | _ => {exp=(),ty=T.NAME(func,ref NONE)}
             end
         | A.OpExp{left,oper=(A.PlusOp | A.MinusOp | A.TimesOp | A.DivideOp),
                   right,pos} => (case checkeqty(trexp left, trexp right, pos) of

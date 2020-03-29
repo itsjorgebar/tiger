@@ -1,0 +1,8 @@
+/* error: mutually recursive types thet do not pass through record or array */
+let 
+
+type intlist = {hd:int,tl:intlist}
+
+in
+ ""
+end
