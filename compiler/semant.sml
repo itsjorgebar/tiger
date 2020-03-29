@@ -64,6 +64,22 @@ struct
             end
     in trty
     end
+  fun type_error typ = ("Type" ^ S.name typ ^ " is not defined.")
+  fun transParams (params,tenv) = 
+    let fun transParam{name,escape,typ,pos} =
+            case S.look(tenv,typ) of 
+              SOME t => {name=name,ty=t}
+            | NONE => (ErrorMsg.error pos (type_error typ); 
+                       {name=name, ty=T.UNIT})
+    in map transParam params
+    end
+  fun transResult(result,tenv) = 
+    case result of 
+      NONE => T.UNIT
+    | SOME(rt,pos) =>
+       case S.look(tenv,rt) of
+         SOME(result_ty') => result_ty'
+       | NONE =>  (ErrorMsg.error pos (type_error rt); T.UNIT)
   fun processMutrecTypeHeaders(tenv,dec) =
       case dec of 
         A.TypeDec[] => tenv
@@ -82,59 +98,67 @@ struct
                                S.enter(tenv,name,actualTy (T.NAME(name,p))))
               in processMutrecTypeBodys(tenv',A.TypeDec ds)
               end
+          | NONE => (ErrorMsg.error pos ("Undefined type."); tenv)
           | _ => tenv)
       | _ => tenv
+  fun processMutrecFunHeaders(venv,tenv,dec) =
+      case dec of 
+        A.FunctionDec[] => venv
+      | A.FunctionDec({name,params,body,pos,result}::fs) =>
+          let val formals = map #ty (transParams(params,tenv))
+              val result = transResult(result,tenv)
+              val venv' = S.enter(venv,name,
+                                      E.FunEntry{formals=formals,result=result})
+          in processMutrecFunHeaders(venv',tenv,A.FunctionDec fs)
+          end
+      | _ => venv
   fun transDec(venv, tenv, dec, break) = 
-    case dec of 
-      A.VarDec{name, escape, typ=NONE, init, pos} =>
-        let val {exp,ty} = transExp(venv,tenv,break) init
-        in {tenv=tenv, venv=S.enter(venv,name,E.VarEntry{ty=ty})}
-        end
-    | A.VarDec{name, escape, typ=SOME(sym,_), init, pos} =>
-        let val {exp,ty} = transExp(venv,tenv,break) init
-            val expected = nonoptT(S.look(tenv,sym), pos)
-        in if expected = ty 
-           then transDec(venv,tenv,
-              A.VarDec{name=name, escape=escape, typ=NONE, init=init, pos=pos}, 
-              break)          
-           else  (ErrorMsg.error pos 
-                 ("Variable type does not match expression result"); 
-                 {tenv=tenv, venv=venv})
-        end
-    | A.TypeDec[] => {venv=venv, tenv=tenv}
-    | typeDec as A.TypeDec({name,ty,pos}::t) => 
-        let val tenv' = processMutrecTypeHeaders(tenv,typeDec)
-            val tenv'' = processMutrecTypeBodys(tenv',typeDec)
-        in {tenv=tenv'',venv=venv}
-        end
-    | A.FunctionDec[] => {venv=venv,tenv=tenv}
-    | A.FunctionDec({name,params,body,pos,result}::xs) =>
-        let fun type_error typ = ("Type" ^ S.name typ ^ " is not defined.")
-            val result_ty = 
-              case result of 
-                NONE => T.UNIT
-              | SOME(rt,pos) =>
-                  case S.look(tenv,rt) of
-                    SOME(result_ty') => result_ty'
-                  | NONE =>  (ErrorMsg.error pos (type_error rt); T.UNIT)
-            fun transparam{name,escape,typ,pos} =
-              case S.look(tenv,typ) of 
-                SOME t => {name=name,ty=t}
-              | NONE => (ErrorMsg.error pos (type_error typ); 
-                          {name=name, ty=T.UNIT})
-            val params' = map transparam params
-            val venv' = S.enter(venv,name, E.FunEntry{formals= map #ty params',
-                                                      result= result_ty})
-            fun enterparam ({name,ty},venv) = 
-              S.enter(venv,name, E.VarEntry{ty=ty})
-            val venv'' = foldr enterparam venv' params'
-            val {exp=_, ty=body_ty} = transExp(venv'',tenv, break) body
-        in if body_ty = result_ty
-           then transDec(venv',tenv,A.FunctionDec xs, break)
-           else (ErrorMsg.error pos 
-                "Function return type does not match its declaration"; 
-                {venv=venv,tenv=tenv})
-        end
+    let fun processMutrecFunBodys(venv,tenv,dec,break) =
+          (case dec of 
+            A.FunctionDec[] => venv
+          | A.FunctionDec({name,params,body,pos,result}::fs) => 
+              let val params' = transParams(params,tenv)
+                  fun enterparam ({name,ty},venv) = 
+                       S.enter(venv,name, E.VarEntry{ty=ty})
+                  val venv' = foldr enterparam venv params'
+                  val {exp=_, ty=bodyTy} = transExp(venv',tenv, break) body
+                  val resultTy = transResult(result,tenv)
+              in if bodyTy = resultTy
+                 then processMutrecFunBodys(venv,tenv,A.FunctionDec fs,break)
+                 else (ErrorMsg.error pos 
+                      "Function return type does not match its declaration"; 
+                      venv)
+              end
+          | _ => venv)
+    in case dec of 
+         A.VarDec{name, escape, typ=NONE, init, pos} =>
+           let val {exp,ty} = transExp(venv,tenv,break) init
+           in {tenv=tenv, venv=S.enter(venv,name,E.VarEntry{ty=ty})}
+           end
+       | A.VarDec{name, escape, typ=SOME(sym,_), init, pos} =>
+           let val {exp,ty} = transExp(venv,tenv,break) init
+               val expected = nonoptT(S.look(tenv,sym), pos)
+           in if expected = ty 
+              then transDec(venv,tenv,
+                 A.VarDec{name=name, escape=escape, typ=NONE, init=init, pos=pos}, 
+                 break)          
+              else  (ErrorMsg.error pos 
+                    ("Variable type does not match expression result"); 
+                    {tenv=tenv, venv=venv})
+           end
+       | A.TypeDec[] => {venv=venv, tenv=tenv}
+       | typeDec as A.TypeDec _ => 
+           let val tenv' = processMutrecTypeHeaders(tenv,typeDec)
+               val tenv'' = processMutrecTypeBodys(tenv',typeDec)
+           in {tenv=tenv'',venv=venv}
+           end
+       | A.FunctionDec[] => {venv=venv,tenv=tenv}
+       | funDec as A.FunctionDec _ =>
+           let val venv' = processMutrecFunHeaders(venv,tenv,funDec)
+               val venv'' = processMutrecFunBodys(venv',tenv,funDec,break) 
+           in {tenv=tenv,venv=venv''}
+           end
+    end
   and transExp(venv,tenv,break) =
     let
       fun trexp e = 
