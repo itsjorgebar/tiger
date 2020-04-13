@@ -13,6 +13,9 @@ main.sml
 types.sml
 env.sml
 semant.sml
+translate.sml
+mipsframe.sml
+temp.sml
 $/basis.cm
 $/smlnj-lib.cm
 $/ml-yacc-lib.cm

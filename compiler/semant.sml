@@ -2,28 +2,27 @@ structure A = Absyn
 structure S = Symbol
 structure E = Env
 
-structure Translate = struct type exp = unit end
-
 signature SEMANT =
 sig
   type venv = Env.enventry Symbol.table
   type tenv = T.ty Symbol.table
+  type break = int
   type expty = {exp: Translate.exp, ty: T.ty}
   (* Recursively type-checks an AST *)
   val transProg: Absyn.exp -> unit
-  val transVar: venv * tenv * Absyn.var -> expty
-  val transExp: venv * tenv * int -> Absyn.exp -> expty
-  val transDec: venv * tenv * Absyn.dec * int -> {venv: venv, tenv: tenv}
-  val transTy:         tenv -> Absyn.ty -> T.ty
+  val transExp: venv * tenv * break * Translate.level -> Absyn.exp -> expty
+  val transDec: venv * tenv * Absyn.dec * break * Translate.level -> 
+                {venv: venv, tenv: tenv}
+  val transTy: tenv -> Absyn.ty -> T.ty
 end
 
 structure Semant : SEMANT =
 struct
   type venv = Env.enventry Symbol.table
   type tenv = T.ty Symbol.table
+  type break = int
   type expty = {exp: Translate.exp, ty: T.ty}
   fun prettyPrint exp = PrintAbsyn.print(TextIO.stdOut, exp)
-  fun transVar(venv, tenv, var) = {exp=(), ty=T.NIL}
   fun nonoptV (SOME entry,_) = entry
     | nonoptV (NONE,pos) = (ErrorMsg.error pos 
                             ("Variable not declared in this scope")
@@ -112,7 +111,7 @@ struct
             | NONE => (ErrorMsg.error pos "Undefined type."; tenv))
           end
       | _ => tenv
-  fun processMutrecFunHeaders(venv,tenv,dec) =
+  fun processMutrecFunHeaders(venv,tenv,dec,lev) =
       case dec of 
         A.FunctionDec[] => venv
       | A.FunctionDec({name,params,body,pos,result}::fs) =>
@@ -120,11 +119,11 @@ struct
               val result = transResult(result,tenv)
               val venv' = S.enter(venv,name,
                                       E.FunEntry{formals=formals,result=result})
-          in processMutrecFunHeaders(venv',tenv,A.FunctionDec fs)
+          in processMutrecFunHeaders(venv',tenv,A.FunctionDec fs,lev)
           end
       | _ => venv
-  fun transDec(venv, tenv, dec, break) = 
-    let fun processMutrecFunBodys(venv,tenv,dec,break) =
+  fun transDec(venv, tenv, dec, break, lev) = 
+    let fun processMutrecFunBodys(venv,tenv,dec,break,lev) =
           (case dec of 
             A.FunctionDec[] => venv
           | A.FunctionDec({name,params,body,pos,result}::fs) => 
@@ -135,7 +134,8 @@ struct
                   val {exp=_, ty=bodyTy} = transExp(venv',tenv, break) body
                   val resultTy = transResult(result,tenv)
               in if bodyTy = resultTy
-                 then processMutrecFunBodys(venv,tenv,A.FunctionDec fs,break)
+                 then processMutrecFunBodys(venv,tenv,A.FunctionDec fs,break,
+                                            lev)
                  else (ErrorMsg.error pos 
                       "Function return type does not match its declaration"; 
                       venv)
@@ -143,8 +143,10 @@ struct
           | _ => venv)
     in case dec of 
          A.VarDec{name, escape, typ=NONE, init, pos} =>
-           let val {exp,ty} = transExp(venv,tenv,break) init
-           in {tenv=tenv, venv=S.enter(venv,name,E.VarEntry{ty=ty})}
+           let val {exp,ty} = transExp(venv,tenv,break,lev) init
+               val access = Translate.allocLocal lev true
+               val entry = E.VarEntry{access=access,ty=ty}
+           in {tenv=tenv, venv=S.enter(venv,name,entry)}
            end
        | A.VarDec{name, escape, typ=SOME(sym,_), init, pos} =>
            let val {exp,ty} = transExp(venv,tenv,break) init
@@ -153,7 +155,7 @@ struct
               then transDec(venv,tenv,
                  A.VarDec{name=name, escape=escape, typ=NONE, init=init,
                           pos=pos}, 
-                 break)          
+                 break, lev)          
               else  (ErrorMsg.error pos 
                     ("Variable type does not match expression result"); 
                     {tenv=tenv, venv=venv})
@@ -166,12 +168,12 @@ struct
            end
        | A.FunctionDec[] => {venv=venv,tenv=tenv}
        | funDec as A.FunctionDec _ =>
-           let val venv' = processMutrecFunHeaders(venv,tenv,funDec)
-               val venv'' = processMutrecFunBodys(venv',tenv,funDec,break) 
+           let val venv' = processMutrecFunHeaders(venv,tenv,funDec,lev)
+               val venv'' = processMutrecFunBodys(venv',tenv,funDec,break,lev) 
            in {tenv=tenv,venv=venv''}
            end
     end
-  and transExp(venv,tenv,break) =
+  and transExp(venv,tenv,break,lev) =
     let fun trexp e = 
           case e of
             A.VarExp(var) => trvar var
@@ -212,7 +214,7 @@ struct
           | A.SeqExp(_::exps) => transExp(venv,tenv,break) (A.SeqExp exps)
           | A.LetExp{decs,body,pos} =>
               let fun transDec' (dec, {venv=venv', tenv=tenv'}) = 
-                    transDec(venv',tenv',dec,break)
+                    transDec(venv',tenv',dec,break,lev)
                   val {venv=venv',tenv=tenv'} = 
                     foldl transDec' {venv=venv,tenv=tenv} decs
               in transExp(venv',tenv',break) body
@@ -249,7 +251,8 @@ struct
           | A.ForExp{var,escape,lo,hi,body,pos} =>
               let val vd = A.VarDec{name=var, escape=ref true, typ=NONE,
                                     init=lo, pos=pos}
-                  val {venv=venv', tenv=tenv'} = transDec(venv, tenv, vd, break)
+                  val {venv=venv', tenv=tenv'} = 
+                    transDec(venv, tenv, vd, break, lev)
               in (checkint(trexp lo, pos); checkint(trexp hi, pos); 
                   {exp=(),ty=checkeqty(transExp(venv', tenv',break+1) body, 
                                     {exp=(), ty=T.UNIT}, pos)})
