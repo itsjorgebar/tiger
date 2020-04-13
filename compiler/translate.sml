@@ -1,3 +1,5 @@
+structure Fr = Frame
+
 signature TRANSLATE =
 sig
     type level
@@ -11,12 +13,12 @@ end
 
 structure Translate : TRANSLATE = 
 struct
-    datatype level = Top | Lv of Frame.frame
-    type access = level * Frame.access
+    datatype level = Top | Lv of Fr.frame
+    type access = level * Fr.access
     val outermost = Top
-    fun newLevel(parent,name,formals) = Frame.newFrame(name, true::formals)
-    fun formals (Lv fr) = formals fr
+    fun newLevel(parent,name,formals) = Fr.newFrame(name, true::formals)
+    fun formals (Lv fr) = Fr.formals fr
     |   formals _ = [] (* Unreachable *)
-    fun allocLocal (lev as Lv fr) bool = lev * (Frame.allocLocal fr bool)
+    fun allocLocal (lev as Lv fr) bool = lev * (Fr.allocLocal fr bool)
     |   allocLocal x _ = x * InFrame(0) (* Unreachable *)
 end

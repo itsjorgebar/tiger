@@ -118,8 +118,14 @@ struct
       | A.FunctionDec({name,params,body,pos,result}::fs) =>
           let val formals = map #ty (transParams(params,tenv))
               val result = transResult(result,tenv)
-              val venv' = S.enter(venv,name,
-                                      E.FunEntry{formals=formals,result=result})
+              val label = Temp.newlabel()
+              fun makeList(x,0) = []
+              |   makeList(x,n) = x::makeList(x,n-1)
+              val newLevel = Tr.newLevel{parent=lev, name=label, 
+                                         formals=makeList(false,length params)}
+              val funentry = E.FunEntry{level=newLevel,label=label,
+                                        formals=formals,result=result}
+              val venv' = S.enter(venv,name,funentry)
           in processMutrecFunHeaders(venv',tenv,A.FunctionDec fs,lev)
           end
       | _ => venv
@@ -132,7 +138,7 @@ struct
                   fun enterparam ({name,ty},venv) = 
                        S.enter(venv,name, E.VarEntry{ty=ty})
                   val venv' = foldr enterparam venv params'
-                  val {exp=_, ty=bodyTy} = transExp(venv',tenv, break) body
+                  val {exp=_, ty=bodyTy} = transExp(venv',tenv,break,lev) body
                   val resultTy = transResult(result,tenv)
               in if bodyTy = resultTy
                  then processMutrecFunBodys(venv,tenv,A.FunctionDec fs,break,
@@ -150,13 +156,12 @@ struct
            in {tenv=tenv, venv=S.enter(venv,name,entry)}
            end
        | A.VarDec{name, escape, typ=SOME(sym,_), init, pos} =>
-           let val {exp,ty} = transExp(venv,tenv,break) init
+           let val {exp,ty} = transExp(venv,tenv,break,lev) init
                val expected = nonoptT(S.look(tenv,sym), pos)
+               val freeVar = A.VarDec{name=name, escape=escape, typ=NONE,
+                                      init=init, pos=pos}
            in if expected = ty 
-              then transDec(venv,tenv,
-                 A.VarDec{name=name, escape=escape, typ=NONE, init=init,
-                          pos=pos}, 
-                 break, lev)          
+              then transDec(venv,tenv,freeVar,break,lev)          
               else  (ErrorMsg.error pos 
                     ("Variable type does not match expression result"); 
                     {tenv=tenv, venv=venv})
@@ -212,13 +217,13 @@ struct
               | T.ARRAY a => {exp=(), ty=T.ARRAY a}
               | _ => invalidComp pos)
           | A.SeqExp((exp,_)::[]) => trexp exp
-          | A.SeqExp(_::exps) => transExp(venv,tenv,break) (A.SeqExp exps)
+          | A.SeqExp(_::exps) => transExp(venv,tenv,break,lev) (A.SeqExp exps)
           | A.LetExp{decs,body,pos} =>
               let fun transDec' (dec, {venv=venv', tenv=tenv'}) = 
                     transDec(venv',tenv',dec,break,lev)
                   val {venv=venv',tenv=tenv'} = 
                     foldl transDec' {venv=venv,tenv=tenv} decs
-              in transExp(venv',tenv',break) body
+              in transExp(venv',tenv',break,lev) body
               end
           | A.RecordExp{fields=[],typ,pos} => 
               {exp=(), ty=nonoptT(S.look(tenv, typ),pos)}
@@ -237,7 +242,7 @@ struct
               end
           | A.WhileExp{test,body,pos} =>
               (checkint (trexp test, pos); 
-               {exp=(),ty=checkeqty((transExp(venv,tenv,break+1) body), 
+               {exp=(),ty=checkeqty((transExp(venv,tenv,break+1,lev) body), 
                                      {exp=(), ty=T.UNIT}, pos)})
           | A.BreakExp(pos) => if break > 0 then {exp=(), ty=T.UNIT} else 
               (ErrorMsg.error pos ("Break not enclosed in loop.");
@@ -255,7 +260,7 @@ struct
                   val {venv=venv', tenv=tenv'} = 
                     transDec(venv, tenv, vd, break, lev)
               in (checkint(trexp lo, pos); checkint(trexp hi, pos); 
-                  {exp=(),ty=checkeqty(transExp(venv', tenv',break+1) body, 
+                  {exp=(),ty=checkeqty(transExp(venv', tenv',break+1,lev) body, 
                                     {exp=(), ty=T.UNIT}, pos)})
               end
           | _ =>
