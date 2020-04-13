@@ -1,17 +1,18 @@
 structure A = Absyn
 structure S = Symbol
 structure E = Env
+structure Tr = Translate
 
 signature SEMANT =
 sig
   type venv = Env.enventry Symbol.table
   type tenv = T.ty Symbol.table
   type break = int
-  type expty = {exp: Translate.exp, ty: T.ty}
+  type expty = {exp: Tr.exp, ty: T.ty}
   (* Recursively type-checks an AST *)
   val transProg: Absyn.exp -> unit
-  val transExp: venv * tenv * break * Translate.level -> Absyn.exp -> expty
-  val transDec: venv * tenv * Absyn.dec * break * Translate.level -> 
+  val transExp: venv * tenv * break * Tr.level -> Absyn.exp -> expty
+  val transDec: venv * tenv * Absyn.dec * break * Tr.level -> 
                 {venv: venv, tenv: tenv}
   val transTy: tenv -> Absyn.ty -> T.ty
 end
@@ -21,7 +22,7 @@ struct
   type venv = Env.enventry Symbol.table
   type tenv = T.ty Symbol.table
   type break = int
-  type expty = {exp: Translate.exp, ty: T.ty}
+  type expty = {exp: Tr.exp, ty: T.ty}
   fun prettyPrint exp = PrintAbsyn.print(TextIO.stdOut, exp)
   fun nonoptV (SOME entry,_) = entry
     | nonoptV (NONE,pos) = (ErrorMsg.error pos 
@@ -144,7 +145,7 @@ struct
     in case dec of 
          A.VarDec{name, escape, typ=NONE, init, pos} =>
            let val {exp,ty} = transExp(venv,tenv,break,lev) init
-               val access = Translate.allocLocal lev true
+               val access = Tr.allocLocal lev true
                val entry = E.VarEntry{access=access,ty=ty}
            in {tenv=tenv, venv=S.enter(venv,name,entry)}
            end
@@ -298,6 +299,7 @@ struct
     in trexp
     end
 
-  fun transProg exp = (transExp(Env.base_venv, Env.base_tenv, 0) exp; ())
+  fun transProg exp = (transExp(E.base_venv, E.base_tenv, 0, Tr.outermost) exp; 
+                       ())
 
 end

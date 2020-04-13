@@ -24,7 +24,8 @@ structure MipsFrame : FRAME = struct
     fun formals frame = #formals frame
     fun allocLocal frame bool = 
        let val locals = #locals frame
-       in (locals := locals + 1; ~locals)
+       in (locals := locals + 1; 
+           if bool then InReg(Temp.newtemp()) else InFrame(~locals))
        end 
 end
 

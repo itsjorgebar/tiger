@@ -11,11 +11,12 @@ end
 
 structure Translate : TRANSLATE = 
 struct
+    datatype level = Top | Lv of Frame.frame
     type access = level * Frame.access
-        (*TODO define*)
-    type level =
-    fun newLevel(parent,name,formals) = 
-        (Frame.newFrame(name,formals);)
-    fun allocLocal lev bool = Frame.allocLocal() * lev
-
+    val outermost = Top
+    fun newLevel(parent,name,formals) = Frame.newFrame(name, true::formals)
+    fun formals (Lv fr) = formals fr
+    |   formals _ = [] (* Unreachable *)
+    fun allocLocal (lev as Lv fr) bool = lev * (Frame.allocLocal fr bool)
+    |   allocLocal x _ = x * InFrame(0) (* Unreachable *)
 end
