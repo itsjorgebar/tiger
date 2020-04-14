@@ -2,6 +2,7 @@ structure Fr = Frame
 
 signature TRANSLATE =
 sig
+    type exp
     type level
     type access (* not the same as Frame.access *)
     val outermost : level
@@ -15,10 +16,13 @@ structure Translate : TRANSLATE =
 struct
     datatype level = Top | Lv of Fr.frame
     type access = level * Fr.access
+    type exp = unit
     val outermost = Top
-    fun newLevel(parent,name,formals) = Fr.newFrame(name, true::formals)
-    fun formals (Lv fr) = Fr.formals fr
+    fun newLevel{parent=parent,name=name,formals=formals} = 
+        Lv (Fr.newFrame{name=name, formals=true::formals})
+    fun formals (lev as Lv fr) = map (fn frAcc => (lev,frAcc)) (Fr.formals fr)
     |   formals _ = [] (* Unreachable *)
-    fun allocLocal (lev as Lv fr) bool = lev * (Fr.allocLocal fr bool)
-    |   allocLocal x _ = x * InFrame(0) (* Unreachable *)
+    fun allocLocal (lev as Lv fr) esc = (lev,Fr.allocLocal fr esc)
+    |   allocLocal lev esc = (* Unreachable *)
+          (lev,Fr.allocLocal (Fr.newFrame{name=Temp.newlabel(),formals=[]}) esc)
 end

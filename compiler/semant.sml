@@ -24,10 +24,13 @@ struct
   type break = int
   type expty = {exp: Tr.exp, ty: T.ty}
   fun prettyPrint exp = PrintAbsyn.print(TextIO.stdOut, exp)
-  fun nonoptV (SOME entry,_) = entry
-    | nonoptV (NONE,pos) = (ErrorMsg.error pos 
-                            ("Variable not declared in this scope")
-                             ; E.VarEntry{ty=T.UNIT})
+  fun nonoptV (SOME entry,_,_) = entry
+    | nonoptV (NONE,pos,lev) = 
+      (ErrorMsg.error pos ("Variable not declared in this scope") ; 
+      let val fr = Fr.newFrame{name=Temp.newlabel(), formals=[]}
+          val access = (lev, (Fr.allocLocal fr true))
+      in E.VarEntry{access=access, ty=T.UNIT}
+      end)
   fun nonoptT (SOME ty,_) = ty
     | nonoptT (NONE,pos) = (ErrorMsg.error pos 
                             ("Data type not declared in this scope")
@@ -50,10 +53,8 @@ struct
         |  A.RecordTy(fl) => 
             let fun trty' [] = []
                   | trty' ({name, escape, typ, pos}::xs) =
-                      let
-                        val ty = nonoptT(S.look(tenv,typ), pos)
-                      in
-                        (name, ty)::(trty' xs)
+                      let val ty = nonoptT(S.look(tenv,typ), pos)
+                      in (name, ty)::(trty' xs)
                       end
             in T.RECORD (trty' fl, ref ())
             end
@@ -134,10 +135,16 @@ struct
           (case dec of 
             A.FunctionDec[] => venv
           | A.FunctionDec({name,params,body,pos,result}::fs) => 
-              let val params' = transParams(params,tenv)
-                  fun enterparam ({name,ty},venv) = 
-                       S.enter(venv,name, E.VarEntry{ty=ty})
-                  val venv' = foldr enterparam venv params'
+              let val lev' = case nonoptV(S.look(venv,name), pos,lev) of 
+                      E.FunEntry{level=x,...} => x
+                    | _ => (ErrorMsg.error pos "Expected FunEntry got VarEntry"; 
+                            Tr.newLevel{parent=lev, name=Temp.newlabel(), 
+                                        formals=[]})
+                  val paramsAndAccs = ListPair.zip(transParams(params,tenv),
+                                                   Tr.formals lev')
+                  fun enterparam (({name,ty},acc),venv) = 
+                    S.enter(venv,name, E.VarEntry{access=acc,ty=ty})
+                  val venv' = foldr enterparam venv paramsAndAccs
                   val {exp=_, ty=bodyTy} = transExp(venv',tenv,break,lev) body
                   val resultTy = transResult(result,tenv)
               in if bodyTy = resultTy
@@ -191,7 +198,7 @@ struct
                 if #ty (trexp arg) = formal then () else ErrorMsg.error pos 
                  ("Type mismatch between function formal parameters and args")
               in case S.look(venv,func) of
-                  SOME (E.FunEntry{formals,result}) =>
+                  SOME (E.FunEntry{formals,result,...}) =>
                     (app comp (ListPair.zipEq(args,formals))
                       handle UnequalLengths => ErrorMsg.error pos 
                          ("Invalid number of arguments in function call");
@@ -269,7 +276,7 @@ struct
           case e of
             A.SimpleVar(id,pos) =>
               (case Symbol.look(venv,id) of 
-                SOME(E.VarEntry{ty}) => {exp=(), ty=ty}
+                SOME(E.VarEntry{ty,...}) => {exp=(), ty=ty}
               | _ => (ErrorMsg.error pos ("undefined variable " ^ S.name id);
                          {exp=(), ty=T.UNIT}))
           | A.FieldVar(inVar,sym,pos) =>
@@ -296,9 +303,9 @@ struct
                          "type variable");
                         {exp=(),ty=T.UNIT})
         and validateVarT(venv, symbol, exp, pos) =
-          let val ty' = case nonoptV(Symbol.look(venv, symbol),pos) of
-                          E.VarEntry{ty} => ty
-                        | E.FunEntry{formals, result} => result 
+          let val ty' = case nonoptV(S.look(venv, symbol),pos,lev) of
+                          E.VarEntry{ty,...} => ty
+                        | E.FunEntry{result,...} => result 
           in checkeqty({exp=(),ty=ty'}, trexp exp, pos)
           end
     in trexp

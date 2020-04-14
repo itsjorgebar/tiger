@@ -40,7 +40,8 @@ struct
           Symbol.enter(
             tbl,
             Symbol.symbol id, 
-            FunEntry{formals=frmls, result=res}
+            FunEntry{level=Translate.outermost,label=Temp.newlabel(), 
+                     formals=frmls,result=res}
           )
         )
 

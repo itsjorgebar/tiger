@@ -11,22 +11,20 @@ end
 
 structure MipsFrame : FRAME = struct
     (*TODO add view shift*)
-    type frame = {formals: access list, shift: unit, locals: int ref, 
-                  label: Temp.label}
     datatype access = InFrame of int | InReg of Temp.temp
+    type frame = {formals: access list, shift: unit, locals: int ref, 
+                  name: Temp.label}
     fun newFrame{name=name,formals=formals} = 
         let fun locateFormals 0 = [InFrame 0]
             |   locateFormals n = InFrame(n)::locateFormals(n-1)
         in {formals=locateFormals(length formals) , shift=(), locals= ref 0, 
-            label=name}
+            name=name}
         end
-    fun name frame = #name frame
-    fun formals frame = #formals frame
-    fun allocLocal frame bool = 
-       let val locals = #locals frame
-       in (locals := locals + 1; 
-           if bool then InReg(Temp.newtemp()) else InFrame(~locals))
-       end 
+    fun name ({name=name,...} : frame) =  name
+    fun formals ({formals=formals,...} : frame) =  formals
+    fun allocLocal ({locals=locals,...} : frame) esc = 
+        (locals := !locals + 1; 
+         if esc then InReg(Temp.newtemp()) else InFrame(~ (!locals)))
 end
 
 structure Frame : FRAME = MipsFrame
