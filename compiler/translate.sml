@@ -14,9 +14,12 @@ end
 
 structure Translate : TRANSLATE = 
 struct
+    datatype exp = 
+          Ex of Tree.exp
+        | Nx of Tree.stm
+        | Cx of Temp.label * Temp.label -> Tree.stm
     datatype level = Top | Lv of Fr.frame
     type access = level * Fr.access
-    type exp = unit
     val outermost = Top
     fun newLevel{parent=parent,name=name,formals=formals} = 
         Lv (Fr.newFrame{name=name, formals=true::formals})

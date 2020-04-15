@@ -2,6 +2,7 @@ structure A = Absyn
 structure S = Symbol
 structure E = Env
 structure Tr = Translate
+structure T = Tree
 
 signature SEMANT =
 sig
@@ -9,12 +10,18 @@ sig
   type tenv = T.ty Symbol.table
   type break = int
   type expty = {exp: Tr.exp, ty: T.ty}
-  (* Recursively type-checks an AST *)
-  val transProg: Absyn.exp -> unit
+
   val transExp: venv * tenv * break * Tr.level -> Absyn.exp -> expty
   val transDec: venv * tenv * Absyn.dec * break * Tr.level -> 
                 {venv: venv, tenv: tenv}
   val transTy: tenv -> Absyn.ty -> T.ty
+
+  val unEx : exp -> Tree.exp
+  val unNx : exp -> Tree.stm
+  val unCx : exp —► (Temp . labelxTemp . labels-Tree . stm)
+
+  (* Recursively type-checks an AST *)
+  val transProg: Absyn.exp -> unit
 end
 
 structure Semant : SEMANT =
@@ -23,6 +30,7 @@ struct
   type tenv = T.ty Symbol.table
   type break = int
   type expty = {exp: Tr.exp, ty: T.ty}
+
   fun prettyPrint exp = PrintAbsyn.print(TextIO.stdOut, exp)
   fun nonoptV (SOME entry,_,_) = entry
     | nonoptV (NONE,pos,lev) = 
@@ -310,6 +318,21 @@ struct
           end
     in trexp
     end
+  
+  fun unEx (Ex e) = e
+    | unEx (Cx genstm) =
+        let val r = Temp.newtemp()
+            val t = Temp.newlabel() and f = Temp.newlabel()
+        in T.ESEQ(seq[T.MOVE(T.TEMP r, T.CONST 1),
+                              genstm(t,f),
+                              T.LABEL f,
+                              T.MOVE(T.TEMP r, T.CONST 0),
+                              T.LABEL t],
+                  T.TEMP r)
+        end
+    | unEx (Nx s) = T.ESEQ(s,T.CONST 0)
+
+  (*TODO define unCx, unNx*)
 
   fun transProg exp = (transExp(E.base_venv, E.base_tenv, 0, Tr.outermost) exp; 
                        ())
