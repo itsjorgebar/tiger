@@ -1,2 +1,3 @@
 Skeleton 5
-d3f1d"Symbol"aã¢TEMP"è0ad"Temp"jÿgp1ÿ
+d2f2d"Int"ä¢Symbol"ad"Temp"jh2ad"Table"jh0gp1e"IntMapTable"baä¢F"gp1d"Format"f2ÿ=ÿ
+gp1c"TEMP"
