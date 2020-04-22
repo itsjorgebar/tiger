@@ -2,12 +2,12 @@ structure A = Absyn
 structure S = Symbol
 structure E = Env
 structure Tr = Translate
-structure T = Tree
 
 signature SEMANT =
 sig
   type venv = Env.enventry Symbol.table
   type tenv = T.ty Symbol.table
+  (*TODO replace int with a label*)
   type break = int
   type expty = {exp: Tr.exp, ty: T.ty}
 
@@ -16,12 +16,8 @@ sig
                 {venv: venv, tenv: tenv}
   val transTy: tenv -> Absyn.ty -> T.ty
 
-  val unEx : exp -> Tree.exp
-  val unNx : exp -> Tree.stm
-  val unCx : exp —► (Temp . labelxTemp . labels-Tree . stm)
-
   (* Recursively type-checks an AST *)
-  val transProg: Absyn.exp -> unit
+  val transProg: Absyn.exp -> Tr.frag list
 end
 
 structure Semant : SEMANT =
@@ -283,10 +279,9 @@ struct
         and trvar e =
           case e of
             A.SimpleVar(id,pos) =>
-              (case Symbol.look(venv,id) of 
-                SOME(E.VarEntry{ty,...}) => {exp=(), ty=ty}
-              | _ => (ErrorMsg.error pos ("undefined variable " ^ S.name id);
-                         {exp=(), ty=T.UNIT}))
+              let  val {access,...} = nonoptV S.look(venv,id)
+              in {exp= Tr.simpleVar(access,lev), ty= nonoptT S.look(venv,id)}
+              end
           | A.FieldVar(inVar,sym,pos) =>
               let val {exp,ty} = trvar inVar
                   fun fl_look([], target) = 
@@ -319,22 +314,7 @@ struct
     in trexp
     end
   
-  fun unEx (Ex e) = e
-    | unEx (Cx genstm) =
-        let val r = Temp.newtemp()
-            val t = Temp.newlabel() and f = Temp.newlabel()
-        in T.ESEQ(seq[T.MOVE(T.TEMP r, T.CONST 1),
-                              genstm(t,f),
-                              T.LABEL f,
-                              T.MOVE(T.TEMP r, T.CONST 0),
-                              T.LABEL t],
-                  T.TEMP r)
-        end
-    | unEx (Nx s) = T.ESEQ(s,T.CONST 0)
-
-  (*TODO define unCx, unNx*)
-
   fun transProg exp = (transExp(E.base_venv, E.base_tenv, 0, Tr.outermost) exp; 
-                       ())
+                       [])
 
 end
