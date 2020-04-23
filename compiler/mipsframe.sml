@@ -3,6 +3,7 @@ sig
     type frame
     type access
     val FP : Temp.temp
+    val RV : Temp.temp
     val wordSize: int
     val newFrame : {name: Temp.label,
                     formals: bool list} -> frame
@@ -10,7 +11,6 @@ sig
     val formals : frame -> access list
     val allocLocal : frame -> bool -> access
     val exp : access -> Tree.exp -> Tree.exp
-    val RV : Temp.temp
     val procEntryExit1 : frame * Tree.stm -> Tree.stm
     datatype frag = PROC of {body: Tree.stm, frame: frame}
                   | STRING of Temp.label * string
@@ -34,8 +34,9 @@ struct
     fun allocLocal ({locals=locals,...} : frame) esc = 
         (locals := !locals + 1; 
          if esc then InReg(Temp.newtemp()) else InFrame(~ (!locals)))
-    val RV = (*TODO*)
-    val FP = (*TODO*)
+    val FP = 30
+    val RV = 31 
     fun procEntryExit1(frame, body) = body (* Stub *)
-    fun exp acc fp = (*TODO*) Tree.MEM(Tree.BINOP(PLUS,TEMP Tr.getFP(),CONST k))
+    fun exp (InReg k) _ = Tree.TEMP k
+    |   exp (InFrame k) fp =  Tree.MEM(Tree.BINOP(Tree.PLUS,fp,CONST k))
 end
