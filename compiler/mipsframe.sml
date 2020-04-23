@@ -22,6 +22,9 @@ struct
     datatype access = InFrame of int | InReg of Temp.temp
     type frame = {formals: access list, shift: unit, locals: int ref, 
                   name: Temp.label}
+    datatype frag = PROC of {body: Tree.stm, frame: frame}
+                  | STRING of Temp.label * string
+
     val wordSize = 1
     fun newFrame{name=name,formals=formals} = 
         let fun locateFormals 0 = [InFrame 0]
@@ -38,5 +41,5 @@ struct
     val RV = 31 
     fun procEntryExit1(frame, body) = body (* Stub *)
     fun exp (InReg k) _ = Tree.TEMP k
-    |   exp (InFrame k) fp =  Tree.MEM(Tree.BINOP(Tree.PLUS,fp,CONST k))
+    |   exp (InFrame k) fp =  Tree.MEM(Tree.BINOP(Tree.PLUS,fp, Tree.CONST k))
 end

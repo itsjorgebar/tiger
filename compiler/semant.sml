@@ -31,10 +31,7 @@ struct
   fun nonoptV (SOME entry,_,_) = entry
     | nonoptV (NONE,pos,lev) = 
       (ErrorMsg.error pos ("Variable not declared in this scope") ; 
-      let val fr = Fr.newFrame{name=Temp.newlabel(), formals=[]}
-          val access = (lev, (Fr.allocLocal fr true))
-      in E.VarEntry{access=access, ty=T.UNIT}
-      end)
+       E.VarEntry{access=Tr.allocLocal lev true, ty=T.UNIT})
   fun nonoptT (SOME ty,_) = ty
     | nonoptT (NONE,pos) = (ErrorMsg.error pos 
                             ("Data type not declared in this scope")
@@ -279,8 +276,8 @@ struct
         and trvar e =
           case e of
             A.SimpleVar(id,pos) =>
-              let  val {access,...} = nonoptV S.look(venv,id)
-              in {exp= Tr.simpleVar(access,lev), ty= nonoptT S.look(venv,id)}
+              let val E.VarEntry{access,...} = nonoptV(S.look(venv,id),pos,lev)
+              in {exp=Tr.simpleVar(access,lev),ty= nonoptT(S.look(tenv,id),pos)}
               end
           | A.FieldVar(inVar,sym,pos) =>
               let val {exp,ty} = trvar inVar
@@ -316,5 +313,8 @@ struct
   
   fun transProg exp = (transExp(E.base_venv, E.base_tenv, 0, Tr.outermost) exp; 
                        [])
-
+(*
+  fun printTree exp = Printtree.printtree(
+    #exp (transExp(E.base_venv, E.base_tenv, 0, Tr.outermost) exp))
+    *)
 end
