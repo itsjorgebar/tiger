@@ -14,6 +14,7 @@ sig
     val procEntryExit1 : frame * Tree.stm -> Tree.stm
     datatype frag = PROC of {body: Tree.stm, frame: frame}
                   | STRING of Temp.label * string
+    val calleePreserve : access list
 end
 
 structure MipsFrame : FRAME = 
@@ -26,6 +27,8 @@ struct
                   | STRING of Temp.label * string
 
     val wordSize = 32
+    val calleePreserve = map (fn x => InReg x) 
+      [16,17,18,19,20,21,22,23,28,29,30,31]
     fun newFrame{name=name,formals=formals} = 
         let fun locateFormals 0 = [InFrame 0]
             |   locateFormals n = InFrame(n)::locateFormals(n-1)
@@ -40,6 +43,6 @@ struct
     val FP = 30
     val RV = 31 
     fun procEntryExit1(frame, body) = body (* Stub *)
-    fun exp (InReg k) _ = Tree.TEMP k
+    fun exp (InReg k) _ = Tree.MEM(Tree.TEMP k)
     |   exp (InFrame k) fp =  Tree.MEM(Tree.BINOP(Tree.PLUS,fp, Tree.CONST k))
 end

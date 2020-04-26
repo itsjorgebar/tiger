@@ -13,7 +13,7 @@ sig
 
   val transExp: venv * tenv * break * Tr.level -> Absyn.exp -> expty
   val transDec: venv * tenv * Absyn.dec * break * Tr.level -> 
-                {venv: venv, tenv: tenv, exp: Tr.exp list}
+                {venv: venv, tenv: tenv, exps: Tr.exp list}
   val transTy: tenv -> Absyn.ty -> T.ty
 
   (* Recursively type-checks an AST *)
@@ -162,7 +162,7 @@ struct
                val access = Tr.allocLocal lev true
                val entry = E.VarEntry{access=access,ty=ty}
            in {tenv=tenv, venv=S.enter(venv,name,entry), 
-               exp=Tr.assign(access,exp)}
+               exps=[Tr.assign(access,exp)]}
            end
        | A.VarDec{name, escape, typ=SOME(sym,_), init, pos} =>
            let val {exp,ty} = transExp(venv,tenv,break,lev) init
@@ -179,7 +179,7 @@ struct
        | typeDec as A.TypeDec _ => 
            let val tenv' = processMutrecTypeHeaders(tenv,typeDec)
                val tenv'' = processMutrecTypeBodys(tenv',typeDec,false,0)
-           in {tenv=tenv'',venv=venv}
+           in {tenv=tenv'',venv=venv,exps=[]}
            end
        | A.FunctionDec[] => {venv=venv,tenv=tenv}
        | funDec as A.FunctionDec _ =>

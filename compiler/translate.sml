@@ -22,7 +22,9 @@ sig
     val simpleVar : access * level -> exp
     val fieldVar : access * level -> exp (*TODO correct*)
     val subscriptVar : access * level -> exp(*TODO correct*)
+
     val assign : access * exp -> exp
+    val fundec : exp * level -> exp(*TODO*)
 end
 
 structure Translate : TRANSLATE = 
@@ -94,6 +96,35 @@ struct
 
     fun assign((_,f_acc),exp) = 
       Nx(T.MOVE((Frame.exp f_acc (T.TEMP Frame.FP)),unEx exp))
+
+    fun fundec(bodyEx,lev) =
+      let val mallocSaveRegs = foldr (fn(r,ms)=> 
+                                          ((#2(allocLocal(lev,true)))::ms)) 
+                                       [] Frame.calleePreserve 
+          val mallocSaveRegsTrans = map (fn mem => Frame.exp mem lev) 
+                                        mallocSaveRegs
+          val calleePreserveTrans = map (fn mem => Frame.exp mem lev) 
+                                        Frame.calleePreserve
+          fun moveMulti(src,dst) = seq(map (fn (src,dst) => T.MOVE(dst,src))
+                                           (zip(src,dst))) 
+
+          (* 1 (later) *)
+          (* 2 (later) *)
+          (* 3 (later) *)
+          (* 4 (skipped) *)
+          (* 5 *)
+          val saveRegs =  moveMulti(callePreserveTrans,mallocSaveRegsTrans)
+          (* 6 *)
+          val body = unEx bodyEx
+          (* 7 *)
+          val returnVal = T.MOVE(T.TEMP Frame.RV, unEx body) 
+          (* 8 *)
+          val restoreRegs = moveMulti(mallocSaveRegsTrans,calleePreserveTrans)
+          (* 9 (later) *)
+          (* 10 (later) *)
+          (* 11 (later) *)
+      in Nx(seq[saveRegs,body,returnVal,restoreRegs])
+      end
 
     (*TODO, add a fun for each type of A.var and A.exp *)
 end
