@@ -25,7 +25,7 @@ struct
     datatype frag = PROC of {body: Tree.stm, frame: frame}
                   | STRING of Temp.label * string
 
-    val wordSize = 1
+    val wordSize = 32
     fun newFrame{name=name,formals=formals} = 
         let fun locateFormals 0 = [InFrame 0]
             |   locateFormals n = InFrame(n)::locateFormals(n-1)

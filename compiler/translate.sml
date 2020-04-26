@@ -13,12 +13,16 @@ sig
     val allocLocal: level -> bool -> access
 
     val procEntryExit : {level: level, body: exp} -> unit
-    val simpleVar : access * level -> exp
     val getResult : unit -> Frame.frag list
 
     val unEx : exp -> Tree.exp
     val unNx : exp -> Tree.stm
     val unCx : exp -> (Temp.label * Temp.label -> Tree.stm)
+
+    val simpleVar : access * level -> exp
+    val fieldVar : access * level -> exp (*TODO correct*)
+    val subscriptVar : access * level -> exp(*TODO correct*)
+    val assign : access * exp -> exp
 end
 
 structure Translate : TRANSLATE = 
@@ -87,6 +91,9 @@ struct
                      end
         in Ex(Frame.exp f_acc (getDefFP(call_lev, T.TEMP Frame.FP)))
         end
+
+    fun assign((_,f_acc),exp) = 
+      Nx(T.MOVE((Frame.exp f_acc (T.TEMP Frame.FP)),unEx exp))
 
     (*TODO, add a fun for each type of A.var and A.exp *)
 end

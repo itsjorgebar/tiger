@@ -13,7 +13,7 @@ sig
 
   val transExp: venv * tenv * break * Tr.level -> Absyn.exp -> expty
   val transDec: venv * tenv * Absyn.dec * break * Tr.level -> 
-                {venv: venv, tenv: tenv}
+                {venv: venv, tenv: tenv, exp: Tr.exp list}
   val transTy: tenv -> Absyn.ty -> T.ty
 
   (* Recursively type-checks an AST *)
@@ -161,7 +161,8 @@ struct
            let val {exp,ty} = transExp(venv,tenv,break,lev) init
                val access = Tr.allocLocal lev true
                val entry = E.VarEntry{access=access,ty=ty}
-           in {tenv=tenv, venv=S.enter(venv,name,entry)}
+           in {tenv=tenv, venv=S.enter(venv,name,entry), 
+               exp=Tr.assign(access,exp)}
            end
        | A.VarDec{name, escape, typ=SOME(sym,_), init, pos} =>
            let val {exp,ty} = transExp(venv,tenv,break,lev) init
