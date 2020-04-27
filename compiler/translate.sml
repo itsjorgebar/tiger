@@ -13,18 +13,22 @@ sig
     val allocLocal: level -> bool -> access
 
     val procEntryExit : {level: level, body: exp} -> unit
-    val getResult : unit -> Frame.frag list
+    val getResult : unit -> frag list
 
     val unEx : exp -> Tree.exp
     val unNx : exp -> Tree.stm
     val unCx : exp -> (Temp.label * Temp.label -> Tree.stm)
 
+    val dummy : unit -> exp
     val simpleVar : access * level -> exp
     val fieldVar : access * level -> exp (*TODO correct*)
-    val subscriptVar : access * level -> exp(*TODO correct*)
+    val subscriptVar : exp * exp -> exp(*TODO correct*)
+
+    val string : string -> exp
+    val array : exp * exp * level -> exp
 
     val assign : access * exp -> exp
-    val fundec : exp * level -> exp(*TODO*)
+    val fundec : exp * level -> exp
 end
 
 structure Translate : TRANSLATE = 
@@ -37,8 +41,10 @@ struct
         | Cx of Temp.label * Temp.label -> T.stm
     datatype level = Top | Lv of Frame.frame * unit ref
     type access = level * Frame.access
-    type frag = Frame.frag (*TODO set it correctly*)
+    type frag = Frame.frag
     val outermost = Top
+    val result : frag list ref = ref []
+    val fp = T.TEMP Frame.FP
     fun newLevel{parent=parent,name=name,formals=formals} = 
         Lv(Frame.newFrame{name=name, formals=true::formals}, ref ())
     fun formals (lev as Lv(fr,_)) = map (fn frAcc => (lev,frAcc)) 
@@ -53,7 +59,6 @@ struct
     |   transAcc Frame.InReg k = T.TEMP k
  *)
 
-    fun procEntryExit {level=lev, body=exp} = ()(*TODO implement it*) 
     fun getResult() = [] (*TODO implement it*) 
 
     fun seq [] = T.EXP (T.CONST 0) (* Unreachable *)
@@ -84,6 +89,8 @@ struct
     |   unCx (Nx _) = (fn(t,f) => T.JUMP(T.NAME t,[t])) (* Unreachable *)
     |   unCx (Cx genstm) = genstm
 
+    fun dummy() = Ex(T.CONST 1)
+
     fun simpleVar((def_lev,f_acc),call_lev) = 
         let fun getDefFP(curr_lev, curr_fp) = 
                 if def_lev = curr_lev then curr_fp
@@ -94,37 +101,65 @@ struct
         in Ex(Frame.exp f_acc (getDefFP(call_lev, T.TEMP Frame.FP)))
         end
 
+    fun subscriptVar(inVar,exp) = Ex(
+      T.BINOP(T.PLUS,
+        fp,
+        (T.BINOP(T.PLUS,
+          unEx inVar,
+          T.BINOP(T.MUL,
+            unEx exp,
+            T.CONST Frame.wordSize)))))
+
+    fun string lit = let val lab = Temp.newlabel()
+                     in (result := (Frame.STRING(lab,lit)::(!result));
+                         Ex(T.NAME lab)) 
+                     end
+
+    fun array(init,size,lev) = dummy() (*TODO, prototype let val (_,p) = allocLocal(lev,true)
+                           in Ex(Frame.exp p fp)
+                           end *)
+
     fun assign((_,f_acc),exp) = 
       Nx(T.MOVE((Frame.exp f_acc (T.TEMP Frame.FP)),unEx exp))
 
+    fun getFrame (Lv(f,_)) = f
+              (* Unreachable *)
+    |   getFrame _ = Frame.newFrame{name=Temp.newlabel(),formals=[]}
+
     fun fundec(bodyEx,lev) =
-      let val mallocSaveRegs = foldr (fn(r,ms)=> 
-                                          ((#2(allocLocal(lev,true)))::ms)) 
-                                       [] Frame.calleePreserve 
-          val mallocSaveRegsTrans = map (fn mem => Frame.exp mem lev) 
+          (*  View shift prototype
+          val dummyMem = T.CONST 0
+          val mallocSaveRegs = List.tabulate(length Frame.calleePreserve,
+                                        (fn _ => #2(allocLocal lev true)))
+          val mallocSaveRegsTrans = map (fn mem => Frame.exp mem 
+                                                             (T.TEMP Frame.FP)) 
                                         mallocSaveRegs
-          val calleePreserveTrans = map (fn mem => Frame.exp mem lev) 
+          val calleePreserveTrans = map (fn mem => Frame.exp mem dummyMem) 
                                         Frame.calleePreserve
           fun moveMulti(src,dst) = seq(map (fn (src,dst) => T.MOVE(dst,src))
-                                           (zip(src,dst))) 
+                                           (ListPair.zip(src,dst))) 
 
+          val saveRegs =  moveMulti(calleePreserveTrans,mallocSaveRegsTrans)
+          val restoreRegs = moveMulti(mallocSaveRegsTrans,calleePreserveTrans)
+          *)
+          
           (* 1 (later) *)
           (* 2 (later) *)
           (* 3 (later) *)
-          (* 4 (skipped) *)
-          (* 5 *)
-          val saveRegs =  moveMulti(callePreserveTrans,mallocSaveRegsTrans)
-          (* 6 *)
-          val body = unEx bodyEx
+          (* view shift: 4,5,6 *)
           (* 7 *)
-          val returnVal = T.MOVE(T.TEMP Frame.RV, unEx body) 
-          (* 8 *)
-          val restoreRegs = moveMulti(mallocSaveRegsTrans,calleePreserveTrans)
+          (* val returnVal = T.MOVE(T.TEMP Frame.RV, unEx bodyEx) *)
+          (* 8 (later) *)
           (* 9 (later) *)
           (* 10 (later) *)
           (* 11 (later) *)
-      in Nx(seq[saveRegs,body,returnVal,restoreRegs])
-      end
+          Nx(Frame.procEntryExit1(getFrame lev, unNx bodyEx))
+
+    fun getResult() = !result
+
+    fun procEntryExit{level,body} = 
+      (result := Frame.PROC{body=unNx body,frame=getFrame level}::getResult();
+       ())
 
     (*TODO, add a fun for each type of A.var and A.exp *)
 end

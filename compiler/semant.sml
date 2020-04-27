@@ -40,7 +40,7 @@ struct
     case ty of 
       T.INT => ()
     | _ => ErrorMsg.error pos "integer required"
-  fun checkeqty ({exp=exp1, ty=ty1}, {exp=exp2, ty=ty2}, pos) =
+  fun checkeqty ({ty=ty1,...}, {ty=ty2,...}, pos) =
     if ty1 = ty2 then ty1
     else (ErrorMsg.error pos ("Operand types do not match (" ^ T.tyToStr ty1 ^ 
           "," ^ T.tyToStr ty2 ^ ")."); T.UNIT)
@@ -146,11 +146,13 @@ struct
                   fun enterparam (({name,ty},acc),venv) = 
                     S.enter(venv,name, E.VarEntry{access=acc,ty=ty})
                   val venv' = foldr enterparam venv paramsAndAccs
-                  val {exp=_, ty=bodyTy} = transExp(venv',tenv,break,lev) body
+                  val {exp=bodyTrans, ty=bodyTy} = 
+                    transExp(venv',tenv,break,lev') body
                   val resultTy = transResult(result,tenv)
+                  val bodyViewShift = Tr.fundec(bodyTrans,lev')
               in if bodyTy = resultTy
-                 then processMutrecFunBodys(venv,tenv,A.FunctionDec fs,break,
-                                            lev)
+                 then (Tr.procEntryExit{level=lev,body=bodyViewShift};
+                    processMutrecFunBodys(venv,tenv,A.FunctionDec fs,break,lev))
                  else (ErrorMsg.error pos 
                       "Function return type does not match its declaration"; 
                       venv)
@@ -173,19 +175,20 @@ struct
               then transDec(venv,tenv,freeVar,break,lev)          
               else  (ErrorMsg.error pos 
                     ("Variable type does not match expression result"); 
-                    {tenv=tenv, venv=venv})
+                    {tenv=tenv,venv=venv,exps=[]})
            end
-       | A.TypeDec[] => {venv=venv, tenv=tenv}
+       | A.TypeDec[] => {venv=venv,tenv=tenv,exps=[]}
        | typeDec as A.TypeDec _ => 
            let val tenv' = processMutrecTypeHeaders(tenv,typeDec)
                val tenv'' = processMutrecTypeBodys(tenv',typeDec,false,0)
            in {tenv=tenv'',venv=venv,exps=[]}
            end
-       | A.FunctionDec[] => {venv=venv,tenv=tenv}
+       | A.FunctionDec[] => {venv=venv,tenv=tenv,exps=[]}
        | funDec as A.FunctionDec _ =>
            let val venv' = processMutrecFunHeaders(venv,tenv,funDec,lev)
                val venv'' = processMutrecFunBodys(venv',tenv,funDec,break,lev) 
-           in {tenv=tenv,venv=venv''}
+               val (exp,frags) = Tr.fundec(lev)
+           in {tenv=tenv,venv=venv'',exps=[]}
            end
     end
   and transExp(venv,tenv,break,lev) =
@@ -194,7 +197,7 @@ struct
             A.VarExp(var) => trvar var
           | A.NilExp => {exp=(), ty=T.NIL}
           | A.IntExp(_) => {exp=(), ty=T.INT}
-          | A.StringExp(_,_) => {exp=(), ty=T.STRING}
+          | A.StringExp(lit,_) => {exp=Tr.string lit, ty=T.STRING}
           | A.CallExp{func,args,pos} => 
               let fun comp(arg,formal) = 
                 if #ty (trexp arg) = formal then () else ErrorMsg.error pos 
@@ -258,11 +261,13 @@ struct
                {exp=(),ty=T.UNIT})
           | A.ArrayExp{typ,size,init,pos} =>
               (case nonoptT(S.look(tenv,typ),pos) of
-                arr as T.ARRAY(ty,_) => (checkeqty(trexp init, {exp=(),ty=ty},
-                                         pos); 
-                                         {exp=(),ty=arr})
+                arr as T.ARRAY(ty,_) => 
+                  let val {exp,ty} = trexp init 
+                  in (checkeqty(trexp init, {exp=(),ty=ty}, pos); 
+                      {exp=Tr.array(exp,size,lev),ty=arr})
+                  end
               | _ => (ErrorMsg.error pos ("Array expected.");
-                      {exp=(),ty=T.UNIT}))
+                      {exp=Tr.dummy(),ty=T.UNIT}))
           | A.ForExp{var,escape,lo,hi,body,pos} =>
               let val vd = A.VarDec{name=var, escape=ref true, typ=NONE,
                                     init=lo, pos=pos}
@@ -298,11 +303,16 @@ struct
                         {exp=(), ty=ty})
               end
           | A.SubscriptVar(inVar,exp,pos) => case #ty (trvar inVar) of 
-                   T.ARRAY(ty,_) => (checkint(trexp exp, pos); {exp=(),ty=ty})
-                 | _ => (ErrorMsg.error pos 
-                        ("Subscript suffix cannot be applied to a non-array " ^ 
-                         "type variable");
-                        {exp=(),ty=T.UNIT})
+                T.ARRAY(ty,_) =>
+                 let val exp' as {exp=expTrans,...} = trexp exp
+                     val {exp=inVarTrans,...} = trexp inVar
+                 in (checkint(exp', pos); 
+                     {exp=Tr.subscriptVar(inVarTrans,expTrans),ty=ty})
+                 end
+              | _ => (ErrorMsg.error pos 
+                     ("Subscript suffix cannot be applied to a non-array " ^ 
+                      "type variable");
+                     {exp=(),ty=T.UNIT})
         and validateVarT(venv, symbol, exp, pos) =
           let val ty' = case nonoptV(S.look(venv, symbol),pos,lev) of
                           E.VarEntry{ty,...} => ty
@@ -313,7 +323,7 @@ struct
     end
   
   fun transProg exp = (transExp(E.base_venv, E.base_tenv, 0, Tr.outermost) exp; 
-                       [])
+                       Tr.getResult())
 (*
   fun printTree exp = Printtree.printtree(
     #exp (transExp(E.base_venv, E.base_tenv, 0, Tr.outermost) exp))
