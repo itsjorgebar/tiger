@@ -21,8 +21,8 @@ sig
 
     val dummy : unit -> exp
     val simpleVar : access * level -> exp
-    val fieldVar : access * level -> exp (*TODO correct*)
-    val subscriptVar : exp * exp -> exp(*TODO correct*)
+    val fieldVar : exp * int -> exp
+    val subscriptVar : exp * exp -> exp
 
     val string : string -> exp
     val array : exp * exp * level -> exp
@@ -101,14 +101,16 @@ struct
         in Ex(Frame.exp f_acc (getDefFP(call_lev, T.TEMP Frame.FP)))
         end
 
-    fun subscriptVar(inVar,exp) = Ex(
+    fun structuredVar(inVar,numExp) = Ex(T.MEM(
       T.BINOP(T.PLUS,
-        fp,
-        (T.BINOP(T.PLUS,
-          unEx inVar,
-          T.BINOP(T.MUL,
-            unEx exp,
-            T.CONST Frame.wordSize)))))
+        unEx inVar,
+        T.BINOP(T.MUL,
+          numExp,
+          T.CONST Frame.wordSize))))
+
+    fun fieldVar(inVar,i) = structuredVar(inVar, T.CONST i)
+
+    fun subscriptVar(inVar,exp) = structuredVar(inVar, unEx exp)
 
     fun string lit = let val lab = Temp.newlabel()
                      in (result := (Frame.STRING(lab,lit)::(!result));

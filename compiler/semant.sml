@@ -40,13 +40,13 @@ struct
     case ty of 
       T.INT => ()
     | _ => ErrorMsg.error pos "integer required"
-  fun checkeqty ({ty=ty1,...}, {ty=ty2,...}, pos) =
+  fun checkeqty ({ty=ty1,...}:expty, {ty=ty2,...}:expty, pos) =
     if ty1 = ty2 then ty1
     else (ErrorMsg.error pos ("Operand types do not match (" ^ T.tyToStr ty1 ^ 
           "," ^ T.tyToStr ty2 ^ ")."); T.UNIT)
   fun invalidComp pos = (ErrorMsg.error pos ("Invalid comparison types.");
-    {exp=(),ty=T.UNIT})
-  fun compData(a,b,ty,pos) = if a = b then {exp=(), ty=ty} else invalidComp pos
+    {exp=Tr.dummy(),ty=T.UNIT})
+  fun compData(a,b,ty,pos) = if a = b then {exp=Tr.dummy(), ty=ty} else invalidComp pos
   fun actualTy ty = case ty of T.NAME(_,ref(SOME ty')) => ty' | _ => ty
   fun transTy tenv = 
     let fun trty ty = case ty of 
@@ -187,7 +187,6 @@ struct
        | funDec as A.FunctionDec _ =>
            let val venv' = processMutrecFunHeaders(venv,tenv,funDec,lev)
                val venv'' = processMutrecFunBodys(venv',tenv,funDec,break,lev) 
-               val (exp,frags) = Tr.fundec(lev)
            in {tenv=tenv,venv=venv'',exps=[]}
            end
     end
@@ -195,8 +194,8 @@ struct
     let fun trexp e = 
           case e of
             A.VarExp(var) => trvar var
-          | A.NilExp => {exp=(), ty=T.NIL}
-          | A.IntExp(_) => {exp=(), ty=T.INT}
+          | A.NilExp => {exp=Tr.dummy(), ty=T.NIL}
+          | A.IntExp(_) => {exp=Tr.dummy(), ty=T.INT}
           | A.StringExp(lit,_) => {exp=Tr.string lit, ty=T.STRING}
           | A.CallExp{func,args,pos} => 
               let fun comp(arg,formal) = 
@@ -207,78 +206,79 @@ struct
                     (app comp (ListPair.zipEq(args,formals))
                       handle UnequalLengths => ErrorMsg.error pos 
                          ("Invalid number of arguments in function call");
-                          {exp=(),ty=result})
-                  | _ => {exp=(),ty=T.NAME(func,ref NONE)}
+                          {exp=Tr.dummy(),ty=result})
+                  | _ => {exp=Tr.dummy(),ty=T.NAME(func,ref NONE)}
               end
           | A.OpExp{left,oper=(A.PlusOp | A.MinusOp | A.TimesOp | A.DivideOp),
                     right,pos} => 
               (case checkeqty(trexp left, trexp right, pos) of
-                T.INT => {exp=(), ty=T.INT}
+                T.INT => {exp=Tr.dummy(), ty=T.INT}
               | _ => invalidComp pos)
           | A.OpExp{left,oper=(A.LtOp | A.LeOp | A.GtOp | A.GeOp),
                     right,pos} => 
               (case checkeqty(trexp left, trexp right, pos) of
-                T.INT => {exp=(), ty=T.INT}
-              | T.STRING => {exp=(), ty=T.STRING}
+                T.INT => {exp=Tr.dummy(), ty=T.INT}
+              | T.STRING => {exp=Tr.dummy(), ty=T.STRING}
               | _ => invalidComp pos)
           | A.OpExp{left,oper=(A.EqOp | A.NeqOp),right,pos} => 
               (case checkeqty(trexp left,trexp right, pos) of 
-                T.INT => {exp=(), ty=T.INT}
-              | T.STRING => {exp=(), ty=T.STRING}
-              | T.RECORD a => {exp=(), ty=T.RECORD a}
-              | T.ARRAY a => {exp=(), ty=T.ARRAY a}
+                T.INT => {exp=Tr.dummy(), ty=T.INT}
+              | T.STRING => {exp=Tr.dummy(), ty=T.STRING}
+              | T.RECORD a => {exp=Tr.dummy(), ty=T.RECORD a}
+              | T.ARRAY a => {exp=Tr.dummy(), ty=T.ARRAY a}
               | _ => invalidComp pos)
           | A.SeqExp((exp,_)::[]) => trexp exp
           | A.SeqExp(_::exps) => transExp(venv,tenv,break,lev) (A.SeqExp exps)
           | A.LetExp{decs,body,pos} =>
-              let fun transDec' (dec, {venv=venv', tenv=tenv'}) = 
+              let fun transDec' (dec, {venv=venv',tenv=tenv',exps=exps'}) = 
                     transDec(venv',tenv',dec,break,lev)
-                  val {venv=venv',tenv=tenv'} = 
-                    foldl transDec' {venv=venv,tenv=tenv} decs
+                  val {venv=venv',tenv=tenv',exps=exps'} = 
+                    foldl transDec' {venv=venv,tenv=tenv,exps=[]} decs
               in transExp(venv',tenv',break,lev) body
               end
           | A.RecordExp{fields=[],typ,pos} => 
-              {exp=(), ty=nonoptT(S.look(tenv, typ),pos)}
+              {exp=Tr.dummy(), ty=nonoptT(S.look(tenv, typ),pos)}
           | A.RecordExp{fields=(symbol, exp, recpos)::xs,typ,pos} =>
               (validateVarT(venv,symbol,exp,recpos);
                trexp(A.RecordExp{fields=xs, typ=typ, pos=pos}))
           | A.AssignExp{var,exp,pos} => (checkeqty(trvar var, trexp exp, pos); 
-              {exp=(),ty=T.UNIT})
+              {exp=Tr.dummy(),ty=T.UNIT})
           | A.IfExp{test, then', else', pos} =>
               let val thenExpty = trexp then'
                   val ty' = case else' of 
                               SOME elseExp => 
                                 checkeqty(thenExpty, trexp elseExp, pos)
                             | NONE => #ty thenExpty
-              in (checkint (trexp test, pos); {exp=(), ty=ty'})
+              in (checkint (trexp test, pos); {exp=Tr.dummy(), ty=ty'})
               end
           | A.WhileExp{test,body,pos} =>
               (checkint (trexp test, pos); 
-               {exp=(),ty=checkeqty((transExp(venv,tenv,break+1,lev) body), 
-                                     {exp=(), ty=T.UNIT}, pos)})
-          | A.BreakExp(pos) => if break > 0 then {exp=(), ty=T.UNIT} else 
+               {exp=Tr.dummy(),ty=checkeqty((transExp(venv,tenv,break+1,lev) body), 
+                                     {exp=Tr.dummy(), ty=T.UNIT}, pos)})
+          | A.BreakExp(pos) => if break > 0 then {exp=Tr.dummy(), ty=T.UNIT} else 
               (ErrorMsg.error pos ("Break not enclosed in loop.");
-               {exp=(),ty=T.UNIT})
+               {exp=Tr.dummy(),ty=T.UNIT})
           | A.ArrayExp{typ,size,init,pos} =>
               (case nonoptT(S.look(tenv,typ),pos) of
-                arr as T.ARRAY(ty,_) => 
-                  let val {exp,ty} = trexp init 
-                  in (checkeqty(trexp init, {exp=(),ty=ty}, pos); 
-                      {exp=Tr.array(exp,size,lev),ty=arr})
+                arr as T.ARRAY(expectedTy,_) => 
+                  let val init' as {exp=initTrans,ty=initTy} = trexp init 
+                      val {exp=sizeTrans,...} = trexp size
+                  in (checkeqty(init',{exp=Tr.dummy(),ty=expectedTy},pos); 
+                      {exp=Tr.array(initTrans,sizeTrans,lev),ty=arr})
                   end
               | _ => (ErrorMsg.error pos ("Array expected.");
                       {exp=Tr.dummy(),ty=T.UNIT}))
           | A.ForExp{var,escape,lo,hi,body,pos} =>
               let val vd = A.VarDec{name=var, escape=ref true, typ=NONE,
                                     init=lo, pos=pos}
-                  val {venv=venv', tenv=tenv'} = 
+                  val {venv=venv',tenv=tenv',exps=exps'} = 
                     transDec(venv, tenv, vd, break, lev)
               in (checkint(trexp lo, pos); checkint(trexp hi, pos); 
-                  {exp=(),ty=checkeqty(transExp(venv', tenv',break+1,lev) body, 
-                                    {exp=(), ty=T.UNIT}, pos)})
+                  {exp=Tr.dummy(),ty=checkeqty(transExp(venv', tenv',break+1,lev) body, 
+                                    {exp=Tr.dummy(), ty=T.UNIT}, pos)})
               end
           | _ =>
-              {exp=(), ty=T.UNIT}
+              {exp=Tr.dummy(), ty=T.UNIT}
         and trvar e =
           case e of
             A.SimpleVar(id,pos) =>
@@ -286,38 +286,40 @@ struct
               in {exp=Tr.simpleVar(access,lev),ty= nonoptT(S.look(tenv,id),pos)}
               end
           | A.FieldVar(inVar,sym,pos) =>
-              let val {exp,ty} = trvar inVar
-                  fun fl_look([], target) = 
+              let val {exp=inVarTrans,ty=varTy} = trvar inVar
+                  fun fl_look([],target,_) = 
                         (ErrorMsg.error pos 
                         ("Record field " ^ S.name target ^ " type not defined");
-                        {exp=(), ty=ty})
-                    | fl_look((currSym,ty)::xs, target) = 
+                        {i=0, ty=T.UNIT})
+                    | fl_look((currSym,currTy)::xs,target,i) = 
                         if currSym = target 
-                        then {exp=(), ty=ty}
-                        else fl_look(xs,target)
-              in case ty of 
-                   T.RECORD(fl,_) => fl_look(fl, sym)
+                        then {i=(~1), ty=currTy}
+                        else fl_look(xs,target,i+1)
+              in case varTy of 
+                   T.RECORD(fl,_) => let val {i,ty} = fl_look(fl,sym,0) 
+                                     in {exp=Tr.fieldVar(inVarTrans,i),ty=ty}
+                                     end 
                  | _ => (ErrorMsg.error pos ("Field dot suffix cannot be " ^
                                              "applied to a non-record type " ^
                                              "variable");
-                        {exp=(), ty=ty})
+                        {exp=Tr.dummy(), ty=T.UNIT})
               end
           | A.SubscriptVar(inVar,exp,pos) => case #ty (trvar inVar) of 
                 T.ARRAY(ty,_) =>
                  let val exp' as {exp=expTrans,...} = trexp exp
-                     val {exp=inVarTrans,...} = trexp inVar
+                     val {exp=inVarTrans,...} = trvar inVar
                  in (checkint(exp', pos); 
                      {exp=Tr.subscriptVar(inVarTrans,expTrans),ty=ty})
                  end
               | _ => (ErrorMsg.error pos 
                      ("Subscript suffix cannot be applied to a non-array " ^ 
                       "type variable");
-                     {exp=(),ty=T.UNIT})
+                     {exp=Tr.dummy(),ty=T.UNIT})
         and validateVarT(venv, symbol, exp, pos) =
           let val ty' = case nonoptV(S.look(venv, symbol),pos,lev) of
                           E.VarEntry{ty,...} => ty
                         | E.FunEntry{result,...} => result 
-          in checkeqty({exp=(),ty=ty'}, trexp exp, pos)
+          in checkeqty({exp=Tr.dummy(),ty=ty'}, trexp exp, pos)
           end
     in trexp
     end
