@@ -194,7 +194,7 @@ struct
     let fun trexp e = 
           case e of
             A.VarExp(var) => trvar var
-          | A.NilExp => {exp=Tr.dummy(), ty=T.NIL}
+          | A.NilExp => {exp=Tr.nil(), ty=T.NIL}
           | A.IntExp(num) => {exp=Tr.int(num), ty=T.INT}
           | A.StringExp(lit,_) => {exp=Tr.string lit, ty=T.STRING}
           | A.CallExp{func,args,pos} => 
@@ -209,24 +209,18 @@ struct
                           {exp=Tr.dummy(),ty=result})
                   | _ => {exp=Tr.dummy(),ty=T.NAME(func,ref NONE)}
               end
-          | A.OpExp{left,oper=(A.PlusOp | A.MinusOp | A.TimesOp | A.DivideOp),
-                    right,pos} => 
-              (case checkeqty(trexp left, trexp right, pos) of
-                T.INT => {exp=Tr.dummy(), ty=T.INT}
-              | _ => invalidComp pos)
-          | A.OpExp{left,oper=(A.LtOp | A.LeOp | A.GtOp | A.GeOp),
-                    right,pos} => 
-              (case checkeqty(trexp left, trexp right, pos) of
-                T.INT => {exp=Tr.dummy(), ty=T.INT}
-              | T.STRING => {exp=Tr.dummy(), ty=T.STRING}
-              | _ => invalidComp pos)
-          | A.OpExp{left,oper=(A.EqOp | A.NeqOp),right,pos} => 
-              (case checkeqty(trexp left,trexp right, pos) of 
-                T.INT => {exp=Tr.dummy(), ty=T.INT}
-              | T.STRING => {exp=Tr.dummy(), ty=T.STRING}
-              | T.RECORD a => {exp=Tr.dummy(), ty=T.RECORD a}
-              | T.ARRAY a => {exp=Tr.dummy(), ty=T.ARRAY a}
-              | _ => invalidComp pos)
+          | A.OpExp{left,oper,right,pos} => 
+              let val l as {exp=leftTrans,...}= trexp left
+                  val r as {exp=rightTrans,...}= trexp right
+                  val ty = checkeqty(l,r,pos)
+                  val exp = Tr.oper(leftTrans,oper,rightTrans)
+              in case (oper,ty) of 
+                   (((A.PlusOp|A.MinusOp|A.TimesOp|A.DivideOp),T.INT) | 
+                    ((A.LtOp|A.LeOp|A.GtOp|A.GeOp),(T.INT|T.STRING)) |
+                    ((A.EqOp|A.NeqOp),(T.INT|T.STRING|T.RECORD _ |T.ARRAY _))) 
+                       => {exp=exp,ty=ty}
+                 | _ => invalidComp pos
+              end
           | A.SeqExp((exp,_)::[]) => trexp exp
           | A.SeqExp(_::exps) => transExp(venv,tenv,break,lev) (A.SeqExp exps)
           | A.LetExp{decs,body,pos} =>

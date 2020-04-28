@@ -1,3 +1,4 @@
+
 signature TRANSLATE =
 sig
     structure Frame : FRAME (*TODO find out if this line is necessary*)
@@ -24,9 +25,11 @@ sig
     val fieldVar : exp * int -> exp
     val subscriptVar : exp * exp -> exp
 
+    val nil : unit -> exp
     val int : int -> exp
     val string : string -> exp
     val array : exp * exp * level -> exp
+    val oper : exp * Absyn.oper * exp -> exp
 
     val assign : access * exp -> exp
     val fundec : exp * level -> exp
@@ -66,6 +69,22 @@ struct
     |   seq (x::[]) = x
     |   seq (x::xs) = T.SEQ(x,seq xs)
 
+    fun operMap a = case a of 
+        Absyn.PlusOp => T.PLUS
+    |   Absyn.MinusOp => T.MINUS
+    |   Absyn.TimesOp => T.MUL
+    |   Absyn.DivideOp => T.DIV
+    |   _ => T.PLUS (* Unreachable *)
+
+    fun relopMap a = case a of
+        Absyn.EqOp => T.EQ
+    |   Absyn.NeqOp => T.NE
+    |   Absyn.LtOp => T.LT
+    |   Absyn.LeOp => T.LE
+    |   Absyn.GtOp => T.GT
+    |   Absyn.GeOp => T.GE
+    |   _ => T.EQ (* Unreachable *)
+
     fun unEx (Ex e) = e
       | unEx (Nx s) = T.ESEQ(s,T.CONST 0)
       | unEx (Cx genstm) =
@@ -90,7 +109,11 @@ struct
     |   unCx (Nx _) = (fn(t,f) => T.JUMP(T.NAME t,[t])) (* Unreachable *)
     |   unCx (Cx genstm) = genstm
 
-    fun dummy() = Ex(T.CONST 1)
+    fun nil() = Ex(T.CONST 0)
+
+    fun dummy() = Ex(T.CONST ~1)
+
+    fun oper(l,oper,r) = Ex(T.BINOP(operMap oper, unEx l, unEx r))
 
     fun simpleVar((def_lev,f_acc),call_lev) = 
         let fun getDefFP(curr_lev, curr_fp) = 
@@ -114,6 +137,7 @@ struct
     fun subscriptVar(inVar,exp) = structuredVar(inVar, unEx exp)
 
     fun int num = Ex(T.CONST num)
+
     fun string lit = let val lab = Temp.newlabel()
                      in (result := (Frame.STRING(lab,lit)::(!result));
                          Ex(T.NAME lab)) 
