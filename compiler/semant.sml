@@ -28,10 +28,10 @@ struct
   type expty = {exp: Tr.exp, ty: T.ty}
 
   fun prettyPrint exp = PrintAbsyn.print(TextIO.stdOut, exp)
-  fun nonoptV (SOME entry,_,_) = entry
-    | nonoptV (NONE,pos,lev) = 
+  fun nonoptV ((NONE,pos,lev) | (SOME(E.FunEntry _),pos,lev)) = 
       (ErrorMsg.error pos ("Variable not declared in this scope") ; 
        E.VarEntry{access=Tr.allocLocal lev true, ty=T.UNIT})
+  |   nonoptV (SOME entry,_,_) = entry
   fun nonoptT (SOME ty,_) = ty
     | nonoptT (NONE,pos) = (ErrorMsg.error pos 
                             ("Data type not declared in this scope")
@@ -195,7 +195,7 @@ struct
           case e of
             A.VarExp(var) => trvar var
           | A.NilExp => {exp=Tr.dummy(), ty=T.NIL}
-          | A.IntExp(_) => {exp=Tr.dummy(), ty=T.INT}
+          | A.IntExp(num) => {exp=Tr.int(num), ty=T.INT}
           | A.StringExp(lit,_) => {exp=Tr.string lit, ty=T.STRING}
           | A.CallExp{func,args,pos} => 
               let fun comp(arg,formal) = 
@@ -282,7 +282,12 @@ struct
         and trvar e =
           case e of
             A.SimpleVar(id,pos) =>
-              let val E.VarEntry{access,...} = nonoptV(S.look(venv,id),pos,lev)
+              let val access = case nonoptV(S.look(venv,id),pos,lev) of 
+                                  E.VarEntry{access,...} => access
+                                | E.FunEntry{result,...} => 
+                                    (ErrorMsg.error pos 
+                                      ("Variable not declared in this scope") ; 
+                                    Tr.allocLocal lev true)
               in {exp=Tr.simpleVar(access,lev),ty= nonoptT(S.look(tenv,id),pos)}
               end
           | A.FieldVar(inVar,sym,pos) =>

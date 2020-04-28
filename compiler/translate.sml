@@ -24,6 +24,7 @@ sig
     val fieldVar : exp * int -> exp
     val subscriptVar : exp * exp -> exp
 
+    val int : int -> exp
     val string : string -> exp
     val array : exp * exp * level -> exp
 
@@ -112,6 +113,7 @@ struct
 
     fun subscriptVar(inVar,exp) = structuredVar(inVar, unEx exp)
 
+    fun int num = Ex(T.CONST num)
     fun string lit = let val lab = Temp.newlabel()
                      in (result := (Frame.STRING(lab,lit)::(!result));
                          Ex(T.NAME lab)) 

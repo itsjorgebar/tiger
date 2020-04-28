@@ -4,7 +4,7 @@ signature ENV =
 sig
   type access
   type ty
-  datatype enventry = VarEntry of {access: Translate.access, ty: ty}
+  datatype enventry = VarEntry of {access: access, ty: ty}
                     | FunEntry of {level: Translate.level,
                                    label: Temp.label, 
                                    formals: ty list, result: ty}
@@ -14,9 +14,9 @@ end
 
 structure Env: ENV =
 struct
-  type access = unit (*TODO: change *)
+  type access = Translate.access
   type ty = T.ty
-  datatype enventry = VarEntry of {access: Translate.access, ty: ty}
+  datatype enventry = VarEntry of {access: access, ty: ty}
                     | FunEntry of {level: Translate.level,
                                    label: Temp.label, 
                                    formals: ty list, result: ty}
