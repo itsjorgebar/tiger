@@ -15,6 +15,7 @@ sig
     datatype frag = PROC of {body: Tree.stm, frame: frame}
                   | STRING of Temp.label * string
     val calleePreserve : access list
+    val externalCall : string * Tree.exp list -> Tree.exp
 end
 
 structure MipsFrame : FRAME = 
@@ -45,4 +46,5 @@ struct
     fun procEntryExit1(frame, body) = body (* Stub *)
     fun exp (InReg k) _ = Tree.MEM(Tree.TEMP k)
     |   exp (InFrame k) fp =  Tree.MEM(Tree.BINOP(Tree.PLUS,fp, Tree.CONST k))
+    fun externalCall(s,args) = Tree.CALL(Tree.NAME(Temp.namedlabel s),args)
 end

@@ -234,11 +234,11 @@ struct
                     foldl transDec' {venv=venv,tenv=tenv,exps=[]} decs
               in transExp(venv',tenv',break,lev) body
               end
-          | A.RecordExp{fields=[],typ,pos} => 
-              {exp=Tr.dummy(), ty=nonoptT(S.look(tenv, typ),pos)}
-          | A.RecordExp{fields=(symbol, exp, recpos)::xs,typ,pos} =>
-              (validateVarT(venv,symbol,exp,recpos);
-               trexp(A.RecordExp{fields=xs, typ=typ, pos=pos}))
+          | A.RecordExp{fields,typ,pos} =>
+               (app (fn field => validateVarT(venv,field)) fields;
+                {exp=Tr.record(length fields,
+                               map (fn (_,exp,_) => (#exp(trexp exp))) fields),
+                 ty=nonoptT(S.look(tenv, typ),pos)})
           | A.AssignExp{var,exp,pos} => 
               let val l = trvar var val r = trexp exp
               in (checkeqty(l,r,pos); {exp=Tr.assign(#exp l,#exp r),ty=T.UNIT})
@@ -265,7 +265,7 @@ struct
                   let val init' as {exp=initTrans,ty=initTy} = trexp init 
                       val {exp=sizeTrans,...} = trexp size
                   in (checkeqty(init',{exp=Tr.dummy(),ty=expectedTy},pos); 
-                      {exp=Tr.array(initTrans,sizeTrans,lev),ty=arr})
+                      {exp=Tr.array(initTrans,sizeTrans),ty=arr})
                   end
               | _ => (ErrorMsg.error pos ("Array expected.");
                       {exp=Tr.dummy(),ty=T.UNIT}))
@@ -319,11 +319,11 @@ struct
                      ("Subscript suffix cannot be applied to a non-array " ^ 
                       "type variable");
                      {exp=Tr.dummy(),ty=T.UNIT})
-        and validateVarT(venv, symbol, exp, pos) =
+        and validateVarT(venv,(symbol,exp,pos)) =
           let val ty' = case nonoptV(S.look(venv, symbol),pos,lev) of
                           E.VarEntry{ty,...} => ty
                         | E.FunEntry{result,...} => result 
-          in checkeqty({exp=Tr.dummy(),ty=ty'}, trexp exp, pos)
+          in (checkeqty({exp=Tr.dummy(),ty=ty'}, trexp exp, pos);())
           end
     in trexp
     end

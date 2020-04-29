@@ -28,7 +28,8 @@ sig
     val nil : unit -> exp
     val int : int -> exp
     val string : string -> exp
-    val array : exp * exp * level -> exp
+    val array : exp * exp -> exp
+    val record : int * exp list -> exp
     val aritop : exp * Absyn.oper * exp -> exp
     val relop : exp * Absyn.oper * exp -> exp
     val seqExp : exp list -> exp
@@ -154,9 +155,19 @@ struct
                                        (List.take(es,(length es)-1))),
                               unEx(List.last es)))
 
-    fun array(init,size,lev) = dummy() (*TODO, prototype let val (_,p) = allocLocal(lev,true)
-                           in Ex(Frame.exp p fp)
-                           end *)
+    fun array(init,size) = Ex(Frame.externalCall("initArray",
+                                                 [unEx size,unEx init]))
+    fun record(n,exps) = 
+      let val r = T.TEMP (Temp.newtemp())
+          fun fieldAssign(exp,num)= T.MOVE(T.MEM(T.BINOP(T.PLUS,r,
+                                                   T.CONST (num*Frame.wordSize))),
+                                           unEx exp)
+          val fieldAndIndex = ListPair.zip(exps,List.tabulate(n,(fn i => i)))
+      in Ex(T.ESEQ(seq[T.MOVE(r,Frame.externalCall("malloc",
+                                                  [T.CONST(n*Frame.wordSize)])),
+                       seq(map fieldAssign fieldAndIndex)],
+                   r))
+      end
 
     fun vardec((_,f_acc),exp) = 
       Nx(T.MOVE((Frame.exp f_acc (T.TEMP Frame.FP)),unEx exp))
@@ -170,7 +181,7 @@ struct
                              end
 
     fun ifThenElse(test,then',else') = 
-      let val t = Temp.newlabel() 
+      let val t = Temp.newlabel()
           val f = Temp.newlabel()
           val r = T.TEMP(Temp.newtemp())
       in Ex(T.ESEQ(seq[(unCx test)(t,f),T.LABEL t, T.MOVE(r,unEx then'),
