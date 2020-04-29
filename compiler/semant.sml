@@ -164,7 +164,7 @@ struct
                val access = Tr.allocLocal lev true
                val entry = E.VarEntry{access=access,ty=ty}
            in {tenv=tenv, venv=S.enter(venv,name,entry), 
-               exps=[Tr.assign(access,exp)]}
+               exps=[Tr.vardec(access,exp)]}
            end
        | A.VarDec{name, escape, typ=SOME(sym,_), init, pos} =>
            let val {exp,ty} = transExp(venv,tenv,break,lev) init
@@ -239,8 +239,10 @@ struct
           | A.RecordExp{fields=(symbol, exp, recpos)::xs,typ,pos} =>
               (validateVarT(venv,symbol,exp,recpos);
                trexp(A.RecordExp{fields=xs, typ=typ, pos=pos}))
-          | A.AssignExp{var,exp,pos} => (checkeqty(trvar var, trexp exp, pos); 
-              {exp=Tr.dummy(),ty=T.UNIT})
+          | A.AssignExp{var,exp,pos} => 
+              let val l = trvar var val r = trexp exp
+              in (checkeqty(l,r,pos); {exp=Tr.assign(#exp l,#exp r),ty=T.UNIT})
+              end
           | A.IfExp{test, then', else', pos} =>
               let val thenExpty = trexp then'
                   val ty' = case else' of 

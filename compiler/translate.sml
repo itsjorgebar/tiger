@@ -32,7 +32,8 @@ sig
     val aritop : exp * Absyn.oper * exp -> exp
     val relop : exp * Absyn.oper * exp -> exp
     val seqExp : exp list -> exp
-    val assign : access * exp -> exp
+    val vardec: access * exp -> exp
+    val assign : exp * exp -> exp
 
     val fundec : exp * level -> exp
 end
@@ -156,8 +157,10 @@ struct
                            in Ex(Frame.exp p fp)
                            end *)
 
-    fun assign((_,f_acc),exp) = 
+    fun vardec((_,f_acc),exp) = 
       Nx(T.MOVE((Frame.exp f_acc (T.TEMP Frame.FP)),unEx exp))
+    
+    fun assign(l,r) = Nx(T.MOVE(unEx l,unEx r))
 
     fun getFrame (Lv(f,_)) = f
               (* Unreachable *)
