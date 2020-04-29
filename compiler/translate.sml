@@ -30,6 +30,7 @@ sig
     val string : string -> exp
     val array : exp * exp * level -> exp
     val oper : exp * Absyn.oper * exp -> exp
+    val seqExp : exp list -> exp
 
     val assign : access * exp -> exp
     val fundec : exp * level -> exp
@@ -142,6 +143,10 @@ struct
                      in (result := (Frame.STRING(lab,lit)::(!result));
                          Ex(T.NAME lab)) 
                      end
+
+    fun seqExp es = Ex(T.ESEQ(seq (map (fn e => unNx e)
+                                       (List.take(es,(length es)-1))),
+                              unEx(List.last es)))
 
     fun array(init,size,lev) = dummy() (*TODO, prototype let val (_,p) = allocLocal(lev,true)
                            in Ex(Frame.exp p fp)

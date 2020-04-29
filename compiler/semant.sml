@@ -221,8 +221,11 @@ struct
                        => {exp=exp,ty=ty}
                  | _ => invalidComp pos
               end
-          | A.SeqExp((exp,_)::[]) => trexp exp
-          | A.SeqExp(_::exps) => transExp(venv,tenv,break,lev) (A.SeqExp exps)
+          | A.SeqExp exps => 
+              let val exptys = map (fn (e,_) => trexp e) exps 
+                  val expsTrans = map (fn {exp,...} => exp) exptys 
+              in {exp=Tr.seqExp(expsTrans),ty= #ty(List.last exptys)}
+              end
           | A.LetExp{decs,body,pos} =>
               let fun transDec' (dec, {venv=venv',tenv=tenv',exps=exps'}) = 
                     transDec(venv',tenv',dec,break,lev)
@@ -271,8 +274,6 @@ struct
                   {exp=Tr.dummy(),ty=checkeqty(transExp(venv', tenv',break+1,lev) body, 
                                     {exp=Tr.dummy(), ty=T.UNIT}, pos)})
               end
-          | _ =>
-              {exp=Tr.dummy(), ty=T.UNIT}
         and trvar e =
           case e of
             A.SimpleVar(id,pos) =>
