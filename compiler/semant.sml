@@ -210,15 +210,16 @@ struct
                   | _ => {exp=Tr.dummy(),ty=T.NAME(func,ref NONE)}
               end
           | A.OpExp{left,oper,right,pos} => 
-              let val l as {exp=leftTrans,...}= trexp left
-                  val r as {exp=rightTrans,...}= trexp right
-                  val ty = checkeqty(l,r,pos)
-                  val exp = Tr.oper(leftTrans,oper,rightTrans)
+              let val lExpty as {exp=lExp,...}= trexp left
+                  val rExpty as {exp=rExp,...}= trexp right
+                  val ty = checkeqty(lExpty,rExpty,pos)
+                  val args = (lExp,oper,rExp)
               in case (oper,ty) of 
-                   (((A.PlusOp|A.MinusOp|A.TimesOp|A.DivideOp),T.INT) | 
-                    ((A.LtOp|A.LeOp|A.GtOp|A.GeOp),(T.INT|T.STRING)) |
-                    ((A.EqOp|A.NeqOp),(T.INT|T.STRING|T.RECORD _ |T.ARRAY _))) 
-                       => {exp=exp,ty=ty}
+                    ((A.PlusOp|A.MinusOp|A.TimesOp|A.DivideOp),T.INT) => 
+                        {exp=Tr.aritop args,ty=ty}
+                 |  (((A.LtOp|A.LeOp|A.GtOp|A.GeOp),(T.INT|T.STRING)) |
+                     ((A.EqOp|A.NeqOp),(T.INT|T.STRING|T.RECORD _ |T.ARRAY _))) 
+                       => {exp=Tr.relop args,ty=ty}
                  | _ => invalidComp pos
               end
           | A.SeqExp exps => 

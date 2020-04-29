@@ -29,10 +29,11 @@ sig
     val int : int -> exp
     val string : string -> exp
     val array : exp * exp * level -> exp
-    val oper : exp * Absyn.oper * exp -> exp
+    val aritop : exp * Absyn.oper * exp -> exp
+    val relop : exp * Absyn.oper * exp -> exp
     val seqExp : exp list -> exp
-
     val assign : access * exp -> exp
+
     val fundec : exp * level -> exp
 end
 
@@ -70,7 +71,7 @@ struct
     |   seq (x::[]) = x
     |   seq (x::xs) = T.SEQ(x,seq xs)
 
-    fun operMap a = case a of 
+    fun aritopMap a = case a of 
         Absyn.PlusOp => T.PLUS
     |   Absyn.MinusOp => T.MINUS
     |   Absyn.TimesOp => T.MUL
@@ -114,7 +115,10 @@ struct
 
     fun dummy() = Ex(T.CONST ~1)
 
-    fun oper(l,oper,r) = Ex(T.BINOP(operMap oper, unEx l, unEx r))
+    fun aritop(l,oper,r) = Ex(T.BINOP(aritopMap oper, unEx l, unEx r))
+
+    fun relop(l,oper,r) = Cx(fn (t,f) => 
+                                T.CJUMP(relopMap oper,unEx l,unEx r,t,f))
 
     fun simpleVar((def_lev,f_acc),call_lev) = 
         let fun getDefFP(curr_lev, curr_fp) = 
