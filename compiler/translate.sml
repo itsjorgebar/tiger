@@ -34,7 +34,8 @@ sig
     val seqExp : exp list -> exp
     val vardec: access * exp -> exp
     val assign : exp * exp -> exp
-
+    val ifThen : exp * exp -> exp
+    val ifThenElse : exp * exp * exp -> exp
     val fundec : exp * level -> exp
 end
 
@@ -161,6 +162,21 @@ struct
       Nx(T.MOVE((Frame.exp f_acc (T.TEMP Frame.FP)),unEx exp))
     
     fun assign(l,r) = Nx(T.MOVE(unEx l,unEx r))
+
+    fun ifThen(test,then') = let val t = Temp.newlabel() 
+                                 val f = Temp.newlabel()
+                             in Nx(seq[(unCx test)(t,f),T.LABEL t,unNx then' ,
+                                                        T.LABEL f])
+                             end
+
+    fun ifThenElse(test,then',else') = 
+      let val t = Temp.newlabel() 
+          val f = Temp.newlabel()
+          val r = T.TEMP(Temp.newtemp())
+      in Ex(T.ESEQ(seq[(unCx test)(t,f),T.LABEL t, T.MOVE(r,unEx then'),
+                                        T.LABEL f, T.MOVE(r,unEx else')],
+                   r))
+      end
 
     fun getFrame (Lv(f,_)) = f
               (* Unreachable *)

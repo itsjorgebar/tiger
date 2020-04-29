@@ -243,13 +243,14 @@ struct
               let val l = trvar var val r = trexp exp
               in (checkeqty(l,r,pos); {exp=Tr.assign(#exp l,#exp r),ty=T.UNIT})
               end
-          | A.IfExp{test, then', else', pos} =>
-              let val thenExpty = trexp then'
-                  val ty' = case else' of 
-                              SOME elseExp => 
-                                checkeqty(thenExpty, trexp elseExp, pos)
-                            | NONE => #ty thenExpty
-              in (checkint (trexp test, pos); {exp=Tr.dummy(), ty=ty'})
+          | A.IfExp{test,then' ,else'=NONE,pos} => 
+              {exp=Tr.ifThen(#exp (trexp test),#exp (trexp then')),ty=T.UNIT}
+          | A.IfExp{test,then' ,else'=SOME else' ,pos} =>
+              let val testExpty as {exp=testTrans,...} = trexp test
+                  val thenExpty as {exp=thenTrans,ty=thenTy} = trexp then'
+                  val elseExpty as {exp=elseTrans,...} = trexp else' 
+              in (checkint(testExpty, pos); checkeqty(thenExpty,elseExpty,pos); 
+                  {exp=Tr.ifThenElse(testTrans,thenTrans,elseTrans),ty=thenTy})
               end
           | A.WhileExp{test,body,pos} =>
               (checkint (trexp test, pos); 
