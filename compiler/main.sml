@@ -1,10 +1,11 @@
-structure Main: sig val run : string -> Translate.frag list end =
+structure Main: sig val run : string -> unit end =
 struct
 
     fun run filename = 
       let val ast = Parse.parse filename
           fun prettyPrint exp = PrintAbsyn.print(TextIO.stdOut, exp)
-      in Semant.transProg ast
+      in Semant.printIR ast
+      (*Semant.transProg ast*)
           (*prettyPrint ast*)
       end
 

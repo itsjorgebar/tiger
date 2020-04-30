@@ -44,6 +44,8 @@ sig
     val letExp : exp list * exp -> exp
 
     val fundec : exp * level -> exp
+
+    val print : exp -> unit
 end
 
 structure Translate : TRANSLATE = 
@@ -255,5 +257,6 @@ struct
     fun procEntryExit{level,body} = 
       (result := Frame.PROC{body=unNx body,frame=getFrame level}::getResult();
        ())
-
+    
+    fun print exp = Printtree.printtree(TextIO.stdOut,unNx exp)
 end
