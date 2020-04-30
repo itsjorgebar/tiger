@@ -40,5 +40,27 @@ and oper = PlusOp | MinusOp | TimesOp | DivideOp
 withtype field = {name: symbol, escape: bool ref, typ: symbol, pos: pos}
    and fundec = {name: symbol, params: field list, 
                  result: (symbol * pos) option, body: exp, pos: pos}
+
+fun forAlt(var,lo,hi,body,pos) = 
+  let val limit = Symbol.symbol "limit" 
+      val condition = IfExp{test=OpExp{left=VarExp(SimpleVar(var,pos)),
+                                       oper=LtOp,
+                                       right=VarExp(SimpleVar(limit,pos)),
+                                       pos=pos},
+                            then' =BreakExp pos,
+                            else' =NONE,
+                            pos=pos}
+  in LetExp{decs=[VarDec{name=var,escape=ref true,typ=NONE,init=lo,pos=pos},
+                  VarDec{name=limit,escape=ref true,typ=NONE,init=hi,pos=pos}],
+            body=IfExp{test=OpExp{left=lo,oper=GtOp,right=hi,pos=pos},
+                       then' =NilExp,
+                       else' =SOME(WhileExp{test=IntExp 1,
+                                            body=SeqExp[(body,pos),
+                                                        (condition,pos)],
+                                            pos=pos}),
+                       pos=pos},
+            pos=pos}
+  end
+                    
 end
         

@@ -8,6 +8,7 @@ sig
     type frag
 
     val outermost : level
+    val undef : Temp.label
     val newLevel : {parent: level, name: Temp.label,
                     formals: bool list} -> level
     val formals: level -> access list
@@ -37,6 +38,9 @@ sig
     val assign : exp * exp -> exp
     val ifThen : exp * exp -> exp
     val ifThenElse : exp * exp * exp -> exp
+    val break : Temp.label -> exp
+    val whileExp : exp * exp * Temp.label -> exp
+
     val fundec : exp * level -> exp
 end
 
@@ -52,6 +56,7 @@ struct
     type access = level * Frame.access
     type frag = Frame.frag
     val outermost = Top
+    val undef = Temp.newlabel()
     val result : frag list ref = ref []
     val fp = T.TEMP Frame.FP
     fun newLevel{parent=parent,name=name,formals=formals} = 
@@ -189,6 +194,18 @@ struct
                    r))
       end
 
+    fun break lab = Nx(T.JUMP(T.NAME lab,[lab]))
+
+    fun whileExp(condition,body,done) = 
+    let val test = Temp.newlabel()
+        val continue = Temp.newlabel()
+    in Nx(seq[T.LABEL test,
+                (unCx condition)(continue,done),
+              T.LABEL continue,
+                 unNx body,T.EXP(T.NAME test),
+              T.LABEL done])
+    end 
+
     fun getFrame (Lv(f,_)) = f
               (* Unreachable *)
     |   getFrame _ = Frame.newFrame{name=Temp.newlabel(),formals=[]}
@@ -228,5 +245,4 @@ struct
       (result := Frame.PROC{body=unNx body,frame=getFrame level}::getResult();
        ())
 
-    (*TODO, add a fun for each type of A.var and A.exp *)
 end

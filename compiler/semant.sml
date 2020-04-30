@@ -8,7 +8,7 @@ sig
   type venv = Env.enventry Symbol.table
   type tenv = T.ty Symbol.table
   (*TODO replace int with a label*)
-  type break = int
+  type break = Temp.label
   type expty = {exp: Tr.exp, ty: T.ty}
 
   val transExp: venv * tenv * break * Tr.level -> Absyn.exp -> expty
@@ -24,7 +24,7 @@ structure Semant : SEMANT =
 struct
   type venv = Env.enventry Symbol.table
   type tenv = T.ty Symbol.table
-  type break = int
+  type break = Temp.label
   type expty = {exp: Tr.exp, ty: T.ty}
 
   fun prettyPrint exp = PrintAbsyn.print(TextIO.stdOut, exp)
@@ -253,12 +253,19 @@ struct
                   {exp=Tr.ifThenElse(testTrans,thenTrans,elseTrans),ty=thenTy})
               end
           | A.WhileExp{test,body,pos} =>
-              (checkint (trexp test, pos); 
-               {exp=Tr.dummy(),ty=checkeqty((transExp(venv,tenv,break+1,lev) body), 
-                                     {exp=Tr.dummy(), ty=T.UNIT}, pos)})
-          | A.BreakExp(pos) => if break > 0 then {exp=Tr.dummy(), ty=T.UNIT} else 
-              (ErrorMsg.error pos ("Break not enclosed in loop.");
-               {exp=Tr.dummy(),ty=T.UNIT})
+              let val done = Temp.newlabel()
+                  val t as {exp=testTrans,...} = trexp test
+                  val b as {exp=bodyTrans,...} = 
+                    transExp(venv,tenv,done,lev) body
+                  val ty = checkeqty(b,{exp=Tr.dummy(),ty=T.UNIT},pos)
+                  val exp = Tr.whileExp(testTrans,bodyTrans,done)
+              in (checkint(t,pos);{exp=exp,ty=ty})
+              end
+          | A.BreakExp(pos) => 
+              if break = Tr.undef 
+              then (ErrorMsg.error pos ("Break not enclosed in loop.");
+                    {exp=Tr.dummy(),ty=T.UNIT})
+              else {exp=Tr.break break, ty=T.UNIT}
           | A.ArrayExp{typ,size,init,pos} =>
               (case nonoptT(S.look(tenv,typ),pos) of
                 arr as T.ARRAY(expectedTy,_) => 
@@ -270,14 +277,7 @@ struct
               | _ => (ErrorMsg.error pos ("Array expected.");
                       {exp=Tr.dummy(),ty=T.UNIT}))
           | A.ForExp{var,escape,lo,hi,body,pos} =>
-              let val vd = A.VarDec{name=var, escape=ref true, typ=NONE,
-                                    init=lo, pos=pos}
-                  val {venv=venv',tenv=tenv',exps=exps'} = 
-                    transDec(venv, tenv, vd, break, lev)
-              in (checkint(trexp lo, pos); checkint(trexp hi, pos); 
-                  {exp=Tr.dummy(),ty=checkeqty(transExp(venv', tenv',break+1,lev) body, 
-                                    {exp=Tr.dummy(), ty=T.UNIT}, pos)})
-              end
+             trexp(A.forAlt(var,lo,hi,body,pos))
         and trvar e =
           case e of
             A.SimpleVar(id,pos) =>
@@ -328,7 +328,8 @@ struct
     in trexp
     end
   
-  fun transProg exp = (transExp(E.base_venv, E.base_tenv, 0, Tr.outermost) exp; 
+  fun transProg exp = (transExp(E.base_venv, E.base_tenv, 
+                                Tr.undef, Tr.outermost) exp; 
                        Tr.getResult())
 (*
   fun printTree exp = Printtree.printtree(
