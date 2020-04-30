@@ -46,7 +46,6 @@ struct
           "," ^ T.tyToStr ty2 ^ ")."); T.UNIT)
   fun invalidComp pos = (ErrorMsg.error pos ("Invalid comparison types.");
     {exp=Tr.dummy(),ty=T.UNIT})
-  fun compData(a,b,ty,pos) = if a = b then {exp=Tr.dummy(), ty=ty} else invalidComp pos
   fun actualTy ty = case ty of T.NAME(_,ref(SOME ty')) => ty' | _ => ty
   fun transTy tenv = 
     let fun trty ty = case ty of 
@@ -209,7 +208,8 @@ struct
                               "Invalid number of arguments in function call";[])
                     in {exp=Tr.call(level,argsTrans,label,lev),ty=result}
                     end
-                  | _ => {exp=Tr.dummy(),ty=T.NAME(func,ref NONE)}
+                  | _ => (ErrorMsg.error pos "Undefined function.";
+                          {exp=Tr.dummy(),ty=T.NAME(func,ref NONE)})
               end
           | A.OpExp{left,oper,right,pos} => 
               let val lExpty as {exp=lExp,...}= trexp left
@@ -234,7 +234,8 @@ struct
                     transDec(venv',tenv',dec,break,lev)
                   val {venv=venv',tenv=tenv',exps=exps'} = 
                     foldl transDec' {venv=venv,tenv=tenv,exps=[]} decs
-              in transExp(venv',tenv',break,lev) body
+                  val {exp=body,ty} = transExp(venv',tenv',break,lev) body
+              in {exp=Tr.letExp(exps' ,body),ty=ty}
               end
           | A.RecordExp{fields,typ,pos} =>
                (app (fn field => validateVarT(venv,field)) fields;

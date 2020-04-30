@@ -41,6 +41,7 @@ sig
     val break : Temp.label -> exp
     val whileExp : exp * exp * Temp.label -> exp
     val call : level * exp list * Temp.label * level -> exp
+    val letExp : exp list * exp -> exp
 
     val fundec : exp * level -> exp
 end
@@ -204,14 +205,17 @@ struct
     fun break lab = Nx(T.JUMP(T.NAME lab,[lab]))
 
     fun whileExp(condition,body,done) = 
-    let val test = Temp.newlabel()
-        val continue = Temp.newlabel()
-    in Nx(seq[T.LABEL test,
-                (unCx condition)(continue,done),
-              T.LABEL continue,
-                 unNx body,T.EXP(T.NAME test),
-              T.LABEL done])
-    end 
+      let val test = Temp.newlabel()
+          val continue = Temp.newlabel()
+      in Nx(seq[T.LABEL test,
+                  (unCx condition)(continue,done),
+                T.LABEL continue,
+                   unNx body,T.EXP(T.NAME test),
+                T.LABEL done])
+      end 
+
+    fun letExp(defs,body) = Ex(T.ESEQ(seq(map (fn e => unNx e) defs),
+                                      unEx body))
 
     fun getFrame (Lv(f,_)) = f
               (* Unreachable *)
