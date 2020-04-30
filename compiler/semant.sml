@@ -199,14 +199,16 @@ struct
           | A.StringExp(lit,_) => {exp=Tr.string lit, ty=T.STRING}
           | A.CallExp{func,args,pos} => 
               let fun comp(arg,formal) = 
-                if #ty (trexp arg) = formal then () else ErrorMsg.error pos 
-                 ("Type mismatch between function formal parameters and args")
+                    let val e as {exp,ty} = trexp arg
+                    in (checkeqty(e,{exp=Tr.dummy(),ty=formal},pos); exp)
+                    end
               in case S.look(venv,func) of
-                  SOME (E.FunEntry{formals,result,...}) =>
-                    (app comp (ListPair.zipEq(args,formals))
-                      handle UnequalLengths => ErrorMsg.error pos 
-                         ("Invalid number of arguments in function call");
-                          {exp=Tr.dummy(),ty=result})
+                  SOME (E.FunEntry{formals,result,level,label}) =>
+                    let val argsTrans = map comp (ListPair.zipEq(args,formals))
+                            handle UnequalLengths => (ErrorMsg.error pos 
+                              "Invalid number of arguments in function call";[])
+                    in {exp=Tr.call(level,argsTrans,label,lev),ty=result}
+                    end
                   | _ => {exp=Tr.dummy(),ty=T.NAME(func,ref NONE)}
               end
           | A.OpExp{left,oper,right,pos} => 

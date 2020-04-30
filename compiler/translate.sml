@@ -40,6 +40,7 @@ sig
     val ifThenElse : exp * exp * exp -> exp
     val break : Temp.label -> exp
     val whileExp : exp * exp * Temp.label -> exp
+    val call : level * exp list * Temp.label * level -> exp
 
     val fundec : exp * level -> exp
 end
@@ -128,15 +129,21 @@ struct
     fun relop(l,oper,r) = Cx(fn (t,f) => 
                                 T.CJUMP(relopMap oper,unEx l,unEx r,t,f))
 
+    fun getDefFP(def_lev,curr_lev,curr_fp) = 
+      if def_lev = curr_lev
+      then curr_fp
+      else let val (parent_lev,parent_acc) = hd (formals curr_lev)
+               val parent_fp = Frame.exp parent_acc curr_fp
+           in getDefFP(def_lev,parent_lev,parent_fp) 
+           end
+
     fun simpleVar((def_lev,f_acc),call_lev) = 
-        let fun getDefFP(curr_lev, curr_fp) = 
-                if def_lev = curr_lev then curr_fp
-                else let val (parent_lev,parent_acc) = hd (formals curr_lev)
-                         val parent_fp = Frame.exp parent_acc curr_fp
-                     in getDefFP(parent_lev,parent_fp) 
-                     end
-        in Ex(Frame.exp f_acc (getDefFP(call_lev, T.TEMP Frame.FP)))
-        end
+      Ex(Frame.exp f_acc (getDefFP(def_lev,call_lev, T.TEMP Frame.FP)))
+
+    fun call(def_lev,exps,label,call_lev) = 
+      let val sl = getDefFP(def_lev,call_lev,T.TEMP Frame.FP)
+      in Ex(T.CALL(T.NAME label, sl::(map (fn e => unEx e) exps)))
+      end
 
     fun structuredVar(inVar,numExp) = Ex(T.MEM(
       T.BINOP(T.PLUS,
@@ -165,7 +172,7 @@ struct
     fun record(n,exps) = 
       let val r = T.TEMP (Temp.newtemp())
           fun fieldAssign(exp,num)= T.MOVE(T.MEM(T.BINOP(T.PLUS,r,
-                                                   T.CONST (num*Frame.wordSize))),
+                                                 T.CONST (num*Frame.wordSize))),
                                            unEx exp)
           val fieldAndIndex = ListPair.zip(exps,List.tabulate(n,(fn i => i)))
       in Ex(T.ESEQ(seq[T.MOVE(r,Frame.externalCall("malloc",
