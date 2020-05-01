@@ -157,24 +157,20 @@ struct
               end
           | _ => venv)
     in case dec of 
-         A.VarDec{name, escape, typ=NONE, init, pos} =>
-           let val {exp,ty} = transExp(venv,tenv,break,lev) init
+        A.VarDec{name, escape, typ, init, pos} =>
+            let val {exp,ty} = transExp(venv,tenv,break,lev) init
+                val expected = case typ of 
+                      SOME(sym,_) => nonoptT(S.look(tenv,sym),pos)
+                  |   _ => ty
                val access = Tr.allocLocal lev true
                val entry = E.VarEntry{access=access,ty=ty}
-           in {tenv=tenv, venv=S.enter(venv,name,entry), 
-               exps=Tr.vardec(access,exp)::exps}
-           end
-       | A.VarDec{name, escape, typ=SOME(sym,_), init, pos} =>
-           let val {exp,ty} = transExp(venv,tenv,break,lev) init
-               val expected = nonoptT(S.look(tenv,sym), pos)
-               val freeVar = A.VarDec{name=name, escape=escape, typ=NONE,
-                                      init=init, pos=pos}
-           in if expected = ty 
-              then transDec(venv,tenv,exps,freeVar,break,lev)          
-              else  (ErrorMsg.error pos 
+            in if expected = ty 
+               then {tenv=tenv, venv=S.enter(venv,name,entry), 
+                     exps=Tr.vardec(access,exp)::exps}
+               else  (ErrorMsg.error pos 
                     ("Variable type does not match expression result"); 
                     {tenv=tenv,venv=venv,exps=[]})
-           end
+            end
        | A.TypeDec[] => {venv=venv,tenv=tenv,exps=[]}
        | typeDec as A.TypeDec _ => 
            let val tenv' = processMutrecTypeHeaders(tenv,typeDec)
