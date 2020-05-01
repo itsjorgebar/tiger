@@ -18,7 +18,7 @@ sig
 
   (* Recursively type-checks an AST *)
   val transProg: Absyn.exp -> Tr.frag list
-  val printIR: Absyn.exp -> unit
+  val expAndFrags: Absyn.exp -> Tr.exp * Tr.frag list
 end
 
 structure Semant : SEMANT =
@@ -333,10 +333,9 @@ struct
     in trexp
     end
   
-  fun transProg exp = (transExp(E.base_venv, E.base_tenv, 
-                                Tr.undef, Tr.outermost) exp; 
-                       Tr.getResult())
-
-  fun printIR exp = 
-    Tr.printIR(#exp (transExp(E.base_venv,E.base_tenv,Tr.undef,Tr.outermost) exp))
+  fun transProg exp = (transExp(E.base_venv,E.base_tenv,
+                               Tr.undef,Tr.outermost) exp; Tr.getResult())
+  
+  fun expAndFrags exp = ((#exp (transExp(E.base_venv,E.base_tenv,Tr.undef,
+                                         Tr.outermost) exp)),Tr.getResult())
 end
