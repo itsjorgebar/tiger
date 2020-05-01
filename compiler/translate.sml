@@ -168,8 +168,7 @@ struct
     fun int num = Ex(T.CONST num)
 
     fun string lit = let val lab = Temp.newlabel()
-      fun print s = TextIO.output(TextIO.stdOut,s)
-                     in (result := (Frame.STRING(lab,lit)::(!result)); pr
+                     in (result := (Frame.STRING(lab,lit)::(!result));
                          Ex(T.NAME lab)) 
                      end
 

@@ -240,10 +240,31 @@ struct
               in {exp=Tr.letExp(exps' ,body),ty=ty}
               end
           | A.RecordExp{fields,typ,pos} =>
-               (app (fn field => validateVarT(venv,field)) fields;
-                {exp=Tr.record(length fields,
-                               map (fn (_,exp,_) => (#exp(trexp exp))) fields),
-                 ty=nonoptT(S.look(tenv, typ),pos)})
+              let val symExptys = map (fn (sym,exp,_) => (sym,(trexp exp)))
+                                      fields
+                  val expectedTy = nonoptT(S.look(tenv,typ),pos)
+                  val actualTy = T.RECORD(map (fn (sym,{ty,...}) => (sym,ty)) 
+                                              symExptys,
+                                          ref ())
+                  val expTrans =  
+                    Tr.record(length fields,
+                              map (fn (_,{exp,...}) => exp) symExptys)
+                  val err = ErrorMsg.error pos "Unexpected record fields."
+                  val err2 = ErrorMsg.error pos "2.Unexpected record fields."
+                  val err3 = ErrorMsg.error pos "3.Unexpected record fields."
+                  fun checkEqTyRec(ty as T.RECORD(a,_),T.RECORD(b,_)) =
+                    let fun eqField ((symA : A.symbol, tyA : T.ty), 
+                                     (symB : A.symbol, tyB : T.ty)) = 
+                              if (symA = symB andalso tyA = tyB) 
+                              then () 
+                              else err
+                    in (app eqField (ListPair.zipEq(a,b))
+                        handle UnequalLengths => err2;
+                        ty)
+                    end
+                  |   checkEqTyRec _ = (err3;actualTy)
+              in {exp=expTrans,ty=checkEqTyRec(expectedTy,actualTy)}
+              end
           | A.AssignExp{var,exp,pos} => 
               let val l = trvar var val r = trexp exp
               in (checkeqty(l,r,pos); {exp=Tr.assign(#exp l,#exp r),ty=T.UNIT})
@@ -324,12 +345,6 @@ struct
                      ("Subscript suffix cannot be applied to a non-array " ^ 
                       "type variable");
                      {exp=Tr.dummy(),ty=T.UNIT})
-        and validateVarT(venv,(symbol,exp,pos)) =
-          let val ty' = case nonoptV(S.look(venv, symbol),pos,lev) of
-                          E.VarEntry{ty,...} => ty
-                        | E.FunEntry{result,...} => result 
-          in (checkeqty({exp=Tr.dummy(),ty=ty'}, trexp exp, pos);())
-          end
     in trexp
     end
   
