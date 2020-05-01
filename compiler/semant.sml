@@ -249,20 +249,18 @@ struct
                   val expTrans =  
                     Tr.record(length fields,
                               map (fn (_,{exp,...}) => exp) symExptys)
-                  val err = ErrorMsg.error pos "Unexpected record fields."
-                  val err2 = ErrorMsg.error pos "2.Unexpected record fields."
-                  val err3 = ErrorMsg.error pos "3.Unexpected record fields."
+                  val msg = "Unexpected record fields."
                   fun checkEqTyRec(ty as T.RECORD(a,_),T.RECORD(b,_)) =
                     let fun eqField ((symA : A.symbol, tyA : T.ty), 
                                      (symB : A.symbol, tyB : T.ty)) = 
-                              if (symA = symB andalso tyA = tyB) 
+                              if symA = symB andalso tyA = tyB
                               then () 
-                              else err
+                              else ErrorMsg.error pos msg
                     in (app eqField (ListPair.zipEq(a,b))
-                        handle UnequalLengths => err2;
+                        handle UnequalLengths => ErrorMsg.error pos msg;
                         ty)
                     end
-                  |   checkEqTyRec _ = (err3;actualTy)
+                  |   checkEqTyRec _ = (ErrorMsg.error pos msg;actualTy)
               in {exp=expTrans,ty=checkEqTyRec(expectedTy,actualTy)}
               end
           | A.AssignExp{var,exp,pos} => 
