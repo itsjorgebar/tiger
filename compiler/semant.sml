@@ -302,7 +302,7 @@ struct
                         {i=0, ty=T.UNIT})
                     | fl_look((currSym,currTy)::xs,target,i) = 
                         if currSym = target 
-                        then {i=(~1), ty=currTy}
+                        then {i=i, ty=currTy}
                         else fl_look(xs,target,i+1)
               in case varTy of 
                    T.RECORD(fl,_) => let val {i,ty} = fl_look(fl,sym,0) 
