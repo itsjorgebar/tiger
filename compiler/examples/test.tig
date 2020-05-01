@@ -1,1 +1,5 @@
-a
+let
+  function foo(n: int): int = n
+in
+  foo(5)
+end

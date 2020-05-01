@@ -22,7 +22,7 @@ sig
     val unCx : exp -> (Temp.label * Temp.label -> Tree.stm)
 
     val dummy : unit -> exp
-    val simpleVar : access * level -> exp
+    val simpleVar : access * level * Absyn.pos -> exp
     val fieldVar : exp * int -> exp
     val subscriptVar : exp * exp -> exp
 
@@ -40,12 +40,12 @@ sig
     val ifThenElse : exp * exp * exp -> exp
     val break : Temp.label -> exp
     val whileExp : exp * exp * Temp.label -> exp
-    val call : level * exp list * Temp.label * level -> exp
+    val call : level * exp list * Temp.label * level * Absyn.pos -> exp
     val letExp : exp list * exp -> exp
 
     val fundec : exp * level -> exp
 
-    val print : exp -> unit
+    val printIR : exp -> unit
 end
 
 structure Translate : TRANSLATE = 
@@ -56,7 +56,7 @@ struct
           Ex of T.exp
         | Nx of T.stm
         | Cx of Temp.label * Temp.label -> T.stm
-    datatype level = Top | Lv of Frame.frame * unit ref
+    datatype level = Top | Lv of level * Frame.frame * unit ref
     type access = level * Frame.access
     type frag = Frame.frag
     val outermost = Top
@@ -64,11 +64,11 @@ struct
     val result : frag list ref = ref []
     val fp = T.TEMP Frame.FP
     fun newLevel{parent=parent,name=name,formals=formals} = 
-        Lv(Frame.newFrame{name=name, formals=true::formals}, ref ())
-    fun formals (lev as Lv(fr,_)) = map (fn frAcc => (lev,frAcc)) 
+        Lv(parent,Frame.newFrame{name=name,formals=true::formals}, ref ())
+    fun formals (lev as Lv(_,fr,_)) = map (fn frAcc => (lev,frAcc)) 
                                                         (Frame.formals fr)
-    |   formals _ = [] (* Unreachable *)
-    fun allocLocal (lev as Lv(fr,_)) esc = (lev,Frame.allocLocal fr esc)
+    |   formals _ = [] (* outermost level *)
+    fun allocLocal (lev as Lv(_,fr,_)) esc = (lev,Frame.allocLocal fr esc)
     |   allocLocal lev esc = (* Unreachable *)
           (lev,Frame.allocLocal (Frame.newFrame{name=Temp.newlabel(),
                                                 formals=[]}) esc)
@@ -132,21 +132,27 @@ struct
     fun relop(l,oper,r) = Cx(fn (t,f) => 
                                 T.CJUMP(relopMap oper,unEx l,unEx r,t,f))
 
-    fun getDefFP(def_lev,curr_lev,curr_fp) = 
+    fun getDefFP(def_lev,curr_lev,curr_fp,pos) = 
       if def_lev = curr_lev
       then curr_fp
-      else let val (parent_lev,parent_acc) = hd (formals curr_lev)
+      else let fun myPrint s = TextIO.output(TextIO.stdOut,s)
+               val (parent_lev,parent_acc) = 
+                  if (null (formals curr_lev)) 
+                  then (ErrorMsg.error pos "Undefined var or fun.";
+                        (def_lev,#2(allocLocal def_lev true)))
+                  else hd (formals curr_lev)
                val parent_fp = Frame.exp parent_acc curr_fp
-           in getDefFP(def_lev,parent_lev,parent_fp) 
+           in getDefFP(def_lev,parent_lev,parent_fp,pos) 
            end
 
-    fun simpleVar((def_lev,f_acc),call_lev) = 
-      Ex(Frame.exp f_acc (getDefFP(def_lev,call_lev, T.TEMP Frame.FP)))
+    fun simpleVar((def_lev,f_acc),call_lev,pos) = 
+      Ex(Frame.exp f_acc (getDefFP(def_lev,call_lev,T.TEMP Frame.FP,pos)))
 
-    fun call(def_lev,exps,label,call_lev) = 
-      let val sl = getDefFP(def_lev,call_lev,T.TEMP Frame.FP)
+    fun call(Lv(parent,_,_),exps,label,call_lev,pos) = 
+      let val sl = getDefFP(parent,call_lev,T.TEMP Frame.FP,pos)
       in Ex(T.CALL(T.NAME label, sl::(map (fn e => unEx e) exps)))
       end
+    |   call(Top,exps,label,call_lev,pos) = dummy() (* Unreachable *)
 
     fun structuredVar(inVar,numExp) = Ex(T.MEM(
       T.BINOP(T.PLUS,
@@ -219,7 +225,7 @@ struct
     fun letExp(defs,body) = Ex(T.ESEQ(seq(map (fn e => unNx e) defs),
                                       unEx body))
 
-    fun getFrame (Lv(f,_)) = f
+    fun getFrame (Lv(_,f,_)) = f
               (* Unreachable *)
     |   getFrame _ = Frame.newFrame{name=Temp.newlabel(),formals=[]}
 
@@ -257,6 +263,6 @@ struct
     fun procEntryExit{level,body} = 
       (result := Frame.PROC{body=unNx body,frame=getFrame level}::getResult();
        ())
-    
-    fun print exp = Printtree.printtree(TextIO.stdOut,unNx exp)
+
+    fun printIR exp = Printtree.printtree(TextIO.stdOut,unNx exp)
 end

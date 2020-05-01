@@ -12,7 +12,7 @@ sig
   type expty = {exp: Tr.exp, ty: T.ty}
 
   val transExp: venv * tenv * break * Tr.level -> Absyn.exp -> expty
-  val transDec: venv * tenv * Absyn.dec * break * Tr.level -> 
+  val transDec: venv * tenv * Tr.exp list * Absyn.dec * break * Tr.level -> 
                 {venv: venv, tenv: tenv, exps: Tr.exp list}
   val transTy: tenv -> Absyn.ty -> T.ty
 
@@ -29,7 +29,7 @@ struct
   type expty = {exp: Tr.exp, ty: T.ty}
 
   fun prettyPrint exp = PrintAbsyn.print(TextIO.stdOut, exp)
-  fun nonoptV ((NONE,pos,lev) | (SOME(E.FunEntry _),pos,lev)) = 
+  fun nonoptV (NONE,pos,lev) = 
       (ErrorMsg.error pos ("Variable not declared in this scope") ; 
        E.VarEntry{access=Tr.allocLocal lev true, ty=T.UNIT})
   |   nonoptV (SOME entry,_,_) = entry
@@ -98,8 +98,7 @@ struct
               val passedRecOrArr' = case ty' of 
                   (T.RECORD _ | T.ARRAY _) => true
                 | _ => passedRecOrArr
-          in
-            (case S.look(tenv,name) of 
+          in (case S.look(tenv,name) of 
               SOME(T.NAME(_,p)) => 
                 let val tenv' = (p := SOME ty'; 
                                  S.enter(tenv,name,actualTy (T.NAME(name,p))))
@@ -121,22 +120,21 @@ struct
           let val formals = map #ty (transParams(params,tenv))
               val result = transResult(result,tenv)
               val label = Temp.newlabel()
-              fun makeList(x,0) = []
-              |   makeList(x,n) = x::makeList(x,n-1)
               val newLevel = Tr.newLevel{parent=lev, name=label, 
-                                         formals=makeList(false,length params)}
+                                         formals=map 
+                                          (fn {escape,...} => !escape) params}
               val funentry = E.FunEntry{level=newLevel,label=label,
                                         formals=formals,result=result}
               val venv' = S.enter(venv,name,funentry)
           in processMutrecFunHeaders(venv',tenv,A.FunctionDec fs,lev)
           end
       | _ => venv
-  fun transDec(venv, tenv, dec, break, lev) = 
+  fun transDec(venv, tenv, exps, dec, break, lev) = 
     let fun processMutrecFunBodys(venv,tenv,dec,break,lev) =
           (case dec of 
             A.FunctionDec[] => venv
           | A.FunctionDec({name,params,body,pos,result}::fs) => 
-              let val lev' = case nonoptV(S.look(venv,name), pos,lev) of 
+              let val lev' = case nonoptV(S.look(venv,name),pos,lev) of 
                       E.FunEntry{level=x,...} => x
                     | _ => (ErrorMsg.error pos "Expected FunEntry got VarEntry"; 
                             Tr.newLevel{parent=lev, name=Temp.newlabel(), 
@@ -151,7 +149,7 @@ struct
                   val resultTy = transResult(result,tenv)
                   val bodyViewShift = Tr.fundec(bodyTrans,lev')
               in if bodyTy = resultTy
-                 then (Tr.procEntryExit{level=lev,body=bodyViewShift};
+                 then (Tr.procEntryExit{level=lev',body=bodyViewShift};
                     processMutrecFunBodys(venv,tenv,A.FunctionDec fs,break,lev))
                  else (ErrorMsg.error pos 
                       "Function return type does not match its declaration"; 
@@ -164,7 +162,7 @@ struct
                val access = Tr.allocLocal lev true
                val entry = E.VarEntry{access=access,ty=ty}
            in {tenv=tenv, venv=S.enter(venv,name,entry), 
-               exps=[Tr.vardec(access,exp)]}
+               exps=Tr.vardec(access,exp)::exps}
            end
        | A.VarDec{name, escape, typ=SOME(sym,_), init, pos} =>
            let val {exp,ty} = transExp(venv,tenv,break,lev) init
@@ -172,7 +170,7 @@ struct
                val freeVar = A.VarDec{name=name, escape=escape, typ=NONE,
                                       init=init, pos=pos}
            in if expected = ty 
-              then transDec(venv,tenv,freeVar,break,lev)          
+              then transDec(venv,tenv,exps,freeVar,break,lev)          
               else  (ErrorMsg.error pos 
                     ("Variable type does not match expression result"); 
                     {tenv=tenv,venv=venv,exps=[]})
@@ -207,7 +205,7 @@ struct
                     let val argsTrans = map comp (ListPair.zipEq(args,formals))
                             handle UnequalLengths => (ErrorMsg.error pos 
                               "Invalid number of arguments in function call";[])
-                    in {exp=Tr.call(level,argsTrans,label,lev),ty=result}
+                    in {exp=Tr.call(level,argsTrans,label,lev,pos),ty=result}
                     end
                   | _ => (ErrorMsg.error pos "Undefined function.";
                           {exp=Tr.dummy(),ty=T.NAME(func,ref NONE)})
@@ -228,11 +226,14 @@ struct
           | A.SeqExp exps => 
               let val exptys = map (fn (e,_) => trexp e) exps 
                   val expsTrans = map (fn {exp,...} => exp) exptys 
-              in {exp=Tr.seqExp(expsTrans),ty= #ty(List.last exptys)}
+                  val ty = case exptys of
+                              [] => (ErrorMsg.error ~1 "Empty SeqExp";T.UNIT)
+                           |  _ => #ty(List.last exptys)
+              in {exp=Tr.seqExp(expsTrans),ty=ty}
               end
           | A.LetExp{decs,body,pos} =>
               let fun transDec' (dec, {venv=venv',tenv=tenv',exps=exps'}) = 
-                    transDec(venv',tenv',dec,break,lev)
+                    transDec(venv',tenv',exps',dec,break,lev)
                   val {venv=venv',tenv=tenv',exps=exps'} = 
                     foldl transDec' {venv=venv,tenv=tenv,exps=[]} decs
                   val {exp=body,ty} = transExp(venv',tenv',break,lev) body
@@ -285,13 +286,13 @@ struct
         and trvar e =
           case e of
             A.SimpleVar(id,pos) =>
-              let val access = case nonoptV(S.look(venv,id),pos,lev) of 
-                                  E.VarEntry{access,...} => access
-                                | E.FunEntry{result,...} => 
+              let val {access,ty} = case nonoptV(S.look(venv,id),pos,lev) of 
+                                  E.VarEntry x => x
+                                | E.FunEntry _ => 
                                     (ErrorMsg.error pos 
                                       ("Variable not declared in this scope") ; 
-                                    Tr.allocLocal lev true)
-              in {exp=Tr.simpleVar(access,lev),ty= nonoptT(S.look(tenv,id),pos)}
+                                    {access=Tr.allocLocal lev true,ty=T.UNIT})
+              in {exp=Tr.simpleVar(access,lev,pos),ty=ty}
               end
           | A.FieldVar(inVar,sym,pos) =>
               let val {exp=inVarTrans,ty=varTy} = trvar inVar
@@ -337,5 +338,5 @@ struct
                        Tr.getResult())
 
   fun printIR exp = 
-    Tr.print(#exp (transExp(E.base_venv,E.base_tenv,Tr.undef,Tr.outermost) exp))
+    Tr.printIR(#exp (transExp(E.base_venv,E.base_tenv,Tr.undef,Tr.outermost) exp))
 end
