@@ -7,7 +7,6 @@ signature SEMANT =
 sig
   type venv = Env.enventry Symbol.table
   type tenv = T.ty Symbol.table
-  (*TODO replace int with a label*)
   type break = Temp.label
   type expty = {exp: Tr.exp, ty: T.ty}
 

@@ -1,7 +1,7 @@
 
 signature TRANSLATE =
 sig
-    structure Frame : FRAME (*TODO find out if this line is necessary*)
+    structure Frame : FRAME
     type exp
     type level
     type access (* not the same as Frame.access *)
@@ -72,12 +72,6 @@ struct
     |   allocLocal lev esc = (* Unreachable *)
           (lev,Frame.allocLocal (Frame.newFrame{name=Temp.newlabel(),
                                                 formals=[]}) esc)
-(*
-    fun transAcc Frame.InFrame k = T.CONST k 
-    |   transAcc Frame.InReg k = T.TEMP k
- *)
-
-    fun getResult() = [] (*TODO implement it*) 
 
     fun seq [] = T.EXP (T.CONST 0) (* Unreachable *)
     |   seq (x::[]) = x
