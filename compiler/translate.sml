@@ -135,14 +135,17 @@ struct
     fun getDefFP(def_lev,curr_lev,curr_fp,pos) = 
       if def_lev = curr_lev
       then curr_fp
-      else let fun myPrint s = TextIO.output(TextIO.stdOut,s)
-               val (parent_lev,parent_acc) = 
+      else let val parent_acc =
                   if (null (formals curr_lev)) 
+                        (* Unreachable *)
                   then (ErrorMsg.error pos "Undefined var or fun.";
-                        (def_lev,#2(allocLocal def_lev true)))
-                  else hd (formals curr_lev)
+                        #2(allocLocal def_lev true))
+                  else #2(hd (formals curr_lev))
                val parent_fp = Frame.exp parent_acc curr_fp
-           in getDefFP(def_lev,parent_lev,parent_fp,pos) 
+               val parent_lev = case curr_lev of 
+                   Lv(p,_,_) => p
+                |  Top => (ErrorMsg.error pos "Top level has no parent";Top)
+           in getDefFP(def_lev,parent_lev,parent_fp,pos)
            end
 
     fun simpleVar((def_lev,f_acc),call_lev,pos) = 

@@ -120,9 +120,8 @@ struct
           let val formals = map #ty (transParams(params,tenv))
               val result = transResult(result,tenv)
               val label = Temp.newlabel()
-              val newLevel = Tr.newLevel{parent=lev, name=label, 
-                                         formals=map 
-                                          (fn {escape,...} => !escape) params}
+              val newLevel = Tr.newLevel{parent=lev,name=label,
+                formals=map (fn {escape,...} => !escape) params}
               val funentry = E.FunEntry{level=newLevel,label=label,
                                         formals=formals,result=result}
               val venv' = S.enter(venv,name,funentry)
@@ -196,6 +195,7 @@ struct
                     let val e as {exp,ty} = trexp arg
                     in (checkeqty(e,{exp=Tr.dummy(),ty=formal},pos); exp)
                     end
+                  val fin = {exp=Tr.dummy(),ty=T.UNIT}
               in case S.look(venv,func) of
                   SOME (E.FunEntry{formals,result,level,label}) =>
                     let val argsTrans = map comp (ListPair.zipEq(args,formals))
@@ -263,9 +263,9 @@ struct
               let val l = trvar var val r = trexp exp
               in (checkeqty(l,r,pos); {exp=Tr.assign(#exp l,#exp r),ty=T.UNIT})
               end
-          | A.IfExp{test,then' ,else'=NONE,pos} => 
-              {exp=Tr.ifThen(#exp (trexp test),#exp (trexp then')),ty=T.UNIT}
-          | A.IfExp{test,then' ,else'=SOME else' ,pos} =>
+          | A.IfExp{test,then' ,else' =NONE,pos} => 
+              {exp=Tr.ifThen(#exp (trexp test), #exp (trexp then')),ty=T.UNIT}
+          | A.IfExp{test,then' ,else' =SOME else' ,pos} =>
               let val testExpty as {exp=testTrans,...} = trexp test
                   val thenExpty as {exp=thenTrans,ty=thenTy} = trexp then'
                   val elseExpty as {exp=elseTrans,...} = trexp else' 
@@ -342,9 +342,13 @@ struct
     in trexp
     end
   
-  fun transProg exp = (transExp(E.base_venv,E.base_tenv,
-                               Tr.undef,Tr.outermost) exp; Tr.getResult())
-  
-  fun expAndFrags exp = ((#exp (transExp(E.base_venv,E.base_tenv,Tr.undef,
-                                         Tr.outermost) exp)),Tr.getResult())
+  fun expAndFrags ast = 
+    let val mainLev = Tr.newLevel{parent=Tr.outermost,name=Temp.newlabel(),
+                                  formals=[]}
+        val {exp,...} = transExp(E.base_venv,E.base_tenv,Tr.undef,mainLev) ast
+    in (exp,Tr.getResult())
+    end 
+
+  fun transProg ast = #2(expAndFrags ast)
+
 end

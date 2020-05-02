@@ -5,7 +5,6 @@ struct
       let 
           val ast = Parse.parse filename
           fun printAST exp = PrintAbsyn.print(TextIO.stdOut, exp)
-
           val (ir,frags) = Semant.expAndFrags ast
           fun printIR exp = Tr.printIR exp
           
