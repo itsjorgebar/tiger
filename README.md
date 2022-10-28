@@ -1,4 +1,4 @@
-# Tiger ML
+# Tiger in ML
 A compiler front-end for the Tiger programming language, written in ML.
 
 Based on Appel A.W.'s [Modern Compiler Implementation in ML](https://www.cs.princeton.edu/~appel/modern/ml/), chapters 1 to 7.
